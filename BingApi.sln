@@ -1,0 +1,25 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 15
+VisualStudioVersion = 15.0.27004.2008
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BingApi", "BingApi\BingApi.csproj", "{9C7F2AD3-D1D9-4D36-86A0-B1174402E05F}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{9C7F2AD3-D1D9-4D36-86A0-B1174402E05F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{9C7F2AD3-D1D9-4D36-86A0-B1174402E05F}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{9C7F2AD3-D1D9-4D36-86A0-B1174402E05F}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{9C7F2AD3-D1D9-4D36-86A0-B1174402E05F}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {533590D1-EB4A-4FBF-B63D-FE557E2AFE5F}
+	EndGlobalSection
+EndGlobal
