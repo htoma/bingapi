@@ -1,61 +1,62 @@
 using System;
 using System.Threading.Tasks;
-using BingApi.Functions;
 using System.Configuration;
+using System.Linq;
+using System.Net.Http;
+using BingApi.Model;
+using Newtonsoft.Json;
 
 namespace BingApi.APIs
-{
-    using System.Net.Http;
-    using BingApi.Model;
-    using Newtonsoft.Json;
-
+{    
     public class BingImageApi
     {
-        private const string HeaderKeyName = "Ocp-Apim-Subscription-Key";
+        private const string UriBase = "https://api.cognitive.microsoft.com/bing/v7.0/images/search";
 
         private static readonly Lazy<HttpClient> Client = new Lazy<HttpClient>(() => new HttpClient());
 
         private static HttpClient GetClient()
         {
-            if (!Client.Value.DefaultRequestHeaders.Contains(HeaderKeyName))
+            if (!Client.Value.DefaultRequestHeaders.Contains(ApiHeaders.HeaderKeyName))
             {
-                Client.Value.DefaultRequestHeaders.Add(HeaderKeyName, ConfigurationManager.AppSettings["BingImageKey"]);
+                Client.Value.DefaultRequestHeaders.Add(ApiHeaders.HeaderKeyName,
+                    ConfigurationManager.AppSettings["BingImageKey"]);
             }
 
             return Client.Value;
         }
-
-        private const string UriBase = "https://api.cognitive.microsoft.com/bing/v7.0/images/search";
-
+        
         public static async Task<GifImage[]> GetImages(string[] keywords, EBingImageSearchType searchType)
         {
-            return new[]
-                {
-                    new GifImage
-                        {
-                            Url = "https://media.giphy.com/media/26Ff7HyH9n400tmta/giphy.gif",
-                            Width = 480,
-                            Height = 480,
-                            AccentColor = "733E1D"
-                        },
-                    new GifImage
-                        {
-                            Url = "https://media.giphy.com/media/JIHNyyJSPQJKo/giphy.gif",
-                            Width = 500,
-                            Height = 276,
-                            AccentColor = "676564"
-                        }
-                };
+            switch (searchType)
+            {
+                case EBingImageSearchType.IndividualWords:
+                    const int max = 2;
+                    // work backwards, last word is the most important
+                    var result = keywords.Reverse().Select(x => BingImageSearch(x, max));
+                    GifImage[][] images = await Task.WhenAll(result);
+
+                    // todo: distinct on url
+                    return images.SelectMany(x => x).ToArray();
+                default:
+                    throw new Exception("Not implemented yet");
+            }
         }
 
-        private static async Task<GifImage[]> BingImageSearch(string searchQuery)
+        private static async Task<GifImage[]> BingImageSearch(string searchQuery, int max)
         {
-            var uriQuery = UriBase + "?q=" + Uri.EscapeDataString(searchQuery);            
-            var response = await GetClient().GetAsync(new Uri(uriQuery));
-            var content = await response.Content.ReadAsStringAsync();
+            try
+            {
+                var uriQuery = UriBase + "?q=" + Uri.EscapeDataString(searchQuery);
+                var response = await GetClient().GetAsync(new Uri(uriQuery));
+                var content = await response.Content.ReadAsStringAsync();
 
-            var value = JsonConvert.DeserializeObject<ApiImage>(content);
-            return value.Value;;
+                var value = JsonConvert.DeserializeObject<ApiImage>(content);
+                return value.Value.Take(max).ToArray();
+            }
+            catch (Exception ex)
+            {
+                return Array.Empty<GifImage>();
+            }
         }
     }
 }

@@ -1,10 +1,12 @@
+using BingApi.Model;
+
 namespace BingApi.Functions
 {
     using System.Net;
     using System.Net.Http;
     using System.Threading.Tasks;
-    using BingApi.APIs;
-    using BingApi.Helpers;
+    using APIs;
+    using Helpers;
     using Microsoft.Azure.WebJobs;
     using Microsoft.Azure.WebJobs.Extensions.Http;
     using Microsoft.Azure.WebJobs.Host;
@@ -28,7 +30,7 @@ namespace BingApi.Functions
 
             string[] keywords = await TextAnalyticsApi.GetKeywords(payload);
 
-            GifImage[] images = await BingImageApi.GetImages(keywords, EBingImageSearchType.All);
+            GifImage[] images = await BingImageApi.GetImages(keywords, EBingImageSearchType.IndividualWords);
 
             return req.CreateResponse(HttpStatusCode.OK, images);
         }
