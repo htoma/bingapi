@@ -3,7 +3,7 @@ using System.Configuration;
 using System.Linq;
 using System.Net.Http;
 
-namespace BingApi
+namespace BingApi.Helpers
 {
     public static class RequestExtensions
     {

@@ -1,13 +1,14 @@
-using System.Net;
-using System.Net.Http;
-using System.Threading.Tasks;
-using BingApi.Functions;
-using Microsoft.Azure.WebJobs;
-using Microsoft.Azure.WebJobs.Extensions.Http;
-using Microsoft.Azure.WebJobs.Host;
-
-namespace BingApi
+namespace BingApi.Functions
 {
+    using System.Net;
+    using System.Net.Http;
+    using System.Threading.Tasks;
+    using BingApi.APIs;
+    using BingApi.Helpers;
+    using Microsoft.Azure.WebJobs;
+    using Microsoft.Azure.WebJobs.Extensions.Http;
+    using Microsoft.Azure.WebJobs.Host;
+
     public static class FetchImages
     {
         private const string Mobile = "mobile";
@@ -17,23 +18,19 @@ namespace BingApi
             [HttpTrigger(AuthorizationLevel.Function, "post", Route = "images")]
             HttpRequestMessage req, TraceWriter log)
         {
-            log.Info($"C# HTTP trigger function processed a request from {req.GetKeyId()}");
+            log.Info($"Function processed a request from {req.GetKeyId()}");
             if (!req.IsKeyId(Mobile))
             {
                 return req.CreateErrorResponse(HttpStatusCode.Forbidden, "Unauthorized");
             }
 
-            return req.CreateResponse(HttpStatusCode.OK, new[]
-            {
-                new Image
-                {
-                    Url = "https://a"
-                },
-                new Image
-                {
-                    Url = "https://b"
-                }
-            });
+            string payload = await req.Content.ReadAsStringAsync();
+
+            string[] keywords = await TextAnalyticsApi.GetKeywords(payload);
+
+            GifImage[] images = await BingImageApi.GetImages(keywords, EBingImageSearchType.All);
+
+            return req.CreateResponse(HttpStatusCode.OK, images);
         }
     }
 }
