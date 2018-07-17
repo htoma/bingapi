@@ -44,9 +44,14 @@ namespace BingApi.APIs
 
         private static async Task<GifImage[]> BingImageSearch(string searchQuery, int max)
         {
+            if (string.IsNullOrEmpty(searchQuery))
+            {
+                return Array.Empty<GifImage>();
+            }
+
             try
             {
-                var uriQuery = UriBase + "?q=" + Uri.EscapeDataString(searchQuery);
+                var uriQuery = UriBase + "?q=" + Uri.EscapeDataString(searchQuery.Replace(" ", "+"));
                 var response = await GetClient().GetAsync(new Uri(uriQuery));
                 var content = await response.Content.ReadAsStringAsync();
 

@@ -24,14 +24,42 @@ namespace BingApi.APIs
 
         public static async Task<string[]> GetKeywords(string payload)
         {
-            KeyPhraseBatchResult result = await GetClient().KeyPhrasesAsync(
+            KeyPhraseBatchResult batchResult = await GetClient().KeyPhrasesAsync(
                           new MultiLanguageBatchInput(
                               new[]
                                   {
                                       new MultiLanguageInput("en", "1", payload)
                                   }));
 
-            return result.Documents.SelectMany(x => x.KeyPhrases).Distinct().ToArray();
+            var keywords = batchResult.Documents.SelectMany(x => x.KeyPhrases).Distinct().ToList();
+
+            const int maxWordsBeforeFilteringOnText = 4;
+            if (keywords.Count == 0) 
+            {
+                // if no keywords found
+                if (CountWords(payload) <= maxWordsBeforeFilteringOnText)
+                {
+                    // less than 4 words in the text, we'll search on the whole text
+                    keywords.Add(payload);
+                }
+                else
+                {
+                    // search on the last word
+                    keywords.Add(GetLastWord(payload));
+                }
+            }
+            else
+            {
+                // if last word is not part of the last keyword, add it as a keyword
+                var lastKeywordLastWord = GetLastWord(keywords.Last());
+                var lastTextWord = GetLastWord(payload);
+                if (lastTextWord != lastKeywordLastWord)
+                {
+                    keywords.Add(lastTextWord);
+                }
+            }
+
+            return keywords.ToArray();
         }
 
         private static async Task<double?> GetSentimentScore(string payload)
@@ -43,6 +71,22 @@ namespace BingApi.APIs
                                                           new MultiLanguageInput("en", "0", payload)
                                                       }));
             return result.Documents[0].Score;
+        }
+
+        private static int CountWords(string text)
+        {
+            return GetWords(text).Length;
+        }
+
+        private static string GetLastWord(string text)
+        {
+            var words = GetWords(text);
+            return words.Length > 0 ? words.Last() : null;
+        }
+
+        private static string[] GetWords(string text)
+        {
+            return text.Split(" ,.!&".ToCharArray(), StringSplitOptions.RemoveEmptyEntries);
         }
     }
 }
