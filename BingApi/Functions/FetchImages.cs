@@ -28,11 +28,20 @@ namespace BingApi.Functions
 
             string payload = await req.Content.ReadAsStringAsync();
 
-            string[] keywords = await TextAnalyticsApi.GetKeywords(payload);
+            Keywords keywords = await TextAnalyticsApi.GetKeywords(payload);
 
-            GifImage[] images = await BingImageApi.GetImages(keywords, EBingImageSearchType.IndividualWords);
+            if (!int.TryParse(req.GetQueryParameter("maxImagesPerKeyword"), out int maxImagesPerKeyword))
+            {
+                maxImagesPerKeyword = 3;
+            }
 
-            return req.CreateResponse(HttpStatusCode.OK, images);
+            GifImage[] images = await BingImageApi.GetImages(keywords.AllKeywords, maxImagesPerKeyword);
+
+            return req.CreateResponse(HttpStatusCode.OK, new ResultExplained
+                {
+                    Keywords = keywords,
+                    Images = images
+                });
         }
     }
 }

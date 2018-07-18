@@ -24,22 +24,15 @@ namespace BingApi.APIs
 
             return Client.Value;
         }
-        
-        public static async Task<GifImage[]> GetImages(string[] keywords, EBingImageSearchType searchType)
-        {
-            switch (searchType)
-            {
-                case EBingImageSearchType.IndividualWords:
-                    const int max = 2;
-                    // work backwards, last word is the most important
-                    var result = keywords.Reverse().Select(x => BingImageSearch(x, max));
-                    GifImage[][] images = await Task.WhenAll(result);
 
-                    // todo: distinct on url
-                    return images.SelectMany(x => x).ToArray();
-                default:
-                    throw new Exception("Not implemented yet");
-            }
+        public static async Task<GifImage[]> GetImages(string[] keywords, int maxImagesPerKeyword)
+        {
+            // work backwards, last word is the most important
+            var result = keywords.Reverse().Select(x => BingImageSearch(x, maxImagesPerKeyword));
+            GifImage[][] images = await Task.WhenAll(result);
+
+            // todo: distinct on url
+            return images.SelectMany(x => x).ToArray();
         }
 
         private static async Task<GifImage[]> BingImageSearch(string searchQuery, int max)

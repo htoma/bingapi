@@ -7,7 +7,9 @@ using Microsoft.Azure.CognitiveServices.Language.TextAnalytics;
 using Microsoft.Azure.CognitiveServices.Language.TextAnalytics.Models;
 
 namespace BingApi.APIs
-{    
+{
+    using BingApi.Model;
+
     public class TextAnalyticsApi
     {
         private static readonly Lazy<ITextAnalyticsAPI> Client = new Lazy<ITextAnalyticsAPI>(
@@ -22,7 +24,7 @@ namespace BingApi.APIs
             return Client.Value;
         }
 
-        public static async Task<string[]> GetKeywords(string payload)
+        public static async Task<Keywords> GetKeywords(string payload)
         {
             KeyPhraseBatchResult batchResult = await GetClient().KeyPhrasesAsync(
                           new MultiLanguageBatchInput(
@@ -30,22 +32,29 @@ namespace BingApi.APIs
                                   {
                                       new MultiLanguageInput("en", "1", payload)
                                   }));
-
+            
             var keywords = batchResult.Documents.SelectMany(x => x.KeyPhrases).Distinct().ToList();
 
-            const int maxWordsBeforeFilteringOnText = 4;
+            var result = new Keywords
+                {
+                    TextAnalyticsKeywords = keywords.ToArray()
+                };
+
+            const int MaxWordsBeforeFilteringOnText = 4;
             if (keywords.Count == 0) 
             {
                 // if no keywords found
-                if (CountWords(payload) <= maxWordsBeforeFilteringOnText)
+                if (CountWords(payload) <= MaxWordsBeforeFilteringOnText)
                 {
                     // less than 4 words in the text, we'll search on the whole text
                     keywords.Add(payload);
+                    result.EntirePhrase = true;
                 }
                 else
                 {
                     // search on the last word
                     keywords.Add(GetLastWord(payload));
+                    result.LastWord = true;
                 }
             }
             else
@@ -56,10 +65,13 @@ namespace BingApi.APIs
                 if (lastTextWord != lastKeywordLastWord)
                 {
                     keywords.Add(lastTextWord);
+                    result.LastWord = true;
                 }
             }
 
-            return keywords.ToArray();
+            result.AllKeywords = keywords.ToArray();
+
+            return result;
         }
 
         private static async Task<double?> GetSentimentScore(string payload)
