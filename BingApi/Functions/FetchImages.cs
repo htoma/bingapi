@@ -12,16 +12,15 @@ namespace BingApi.Functions
     using Microsoft.Azure.WebJobs.Host;
 
     public static class FetchImages
-    {
-        private const string Mobile = "mobile";
-
+    {        
         [FunctionName("FetchImages")]
         public static async Task<HttpResponseMessage> Run(
             [HttpTrigger(AuthorizationLevel.Function, "post", Route = "images")]
             HttpRequestMessage req, TraceWriter log)
         {
-            log.Info($"Function processed a request from {req.GetKeyId()}");
-            if (!req.IsKeyId(Mobile))
+            log.Info($"Get images request from {req.GetKeyId()}");
+
+            if (!req.IsKeyId(Constants.Mobile))
             {
                 return req.CreateErrorResponse(HttpStatusCode.Forbidden, "Unauthorized");
             }
