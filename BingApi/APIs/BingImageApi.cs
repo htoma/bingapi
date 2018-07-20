@@ -45,13 +45,13 @@ namespace BingApi.APIs
             try
             {
                 var uriQuery = UriBase + "?q=" + Uri.EscapeDataString(searchQuery.Replace(" ", "+"));
+                uriQuery += "&imageType=AnimatedGifHttps";
+                uriQuery += "&mkt=en-US";
+                uriQuery += "&safeSearch=Strict";
+
                 // we might want to add the following parameters to find GIFs as SwiftKey Android does.
-                // imageType=AnimatedGifHttps
-                // mkt=<locale from client>
                 // license=conversation
-                // safeSearch=Strict 
-                // but I am not sure if all of them are available.
-                
+
                 var response = await GetClient().GetAsync(new Uri(uriQuery));
                 var content = await response.Content.ReadAsStringAsync();
 
