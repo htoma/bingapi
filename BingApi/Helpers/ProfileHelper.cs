@@ -28,5 +28,11 @@ namespace BingApi.Helpers
                     .ToArray()
             };
         }
+
+        public static string[] GetKeywordsFromProfile(UserProfile profile)
+        {
+            // add custom logic for combining search keyword and gif selection keywords
+            return profile.SearchKeywords.Concat(profile.GifSelectionKeywords).Distinct().ToArray();
+        }
     }
 }
