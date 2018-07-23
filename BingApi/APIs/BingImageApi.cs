@@ -4,6 +4,7 @@ using System.Threading.Tasks;
 using System.Configuration;
 using System.Linq;
 using System.Net.Http;
+using BingApi.DbModel;
 using BingApi.Model;
 using Newtonsoft.Json;
 
@@ -63,12 +64,25 @@ namespace BingApi.APIs
                 var content = await response.Content.ReadAsStringAsync();
 
                 var value = JsonConvert.DeserializeObject<ApiImage>(content);
-                return value.Value.Where(x => x.ContentUrl.Contains("media.giphy.com")).Take(max).ToArray();
+                var images = value.Value.Where(x => x.ContentUrl.Contains("media.giphy.com")).Take(max).ToList();
+                foreach (var image in images)
+                {
+                    AddIdToImage(image);
+                }
+
+                return images.ToArray();
             }
             catch (Exception ex)
             {
                 return Array.Empty<GifImage>();
             }
+        }
+
+        private static void AddIdToImage(GifImage image)
+        {
+            var id = image.ContentUrl.Split(new[] {"/"}, StringSplitOptions.RemoveEmptyEntries);
+            //https://media.giphy.com/media/zHRHMP5jzXdxm/giphy.gif
+            image.Id = id[3];
         }
     }
 }

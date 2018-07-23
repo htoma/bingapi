@@ -35,6 +35,21 @@ namespace BingApi.DbHelpers
             return result.ToList();
         }
 
+        public static async Task StoreGif(GifImage gif)
+        {
+            await Client.Value.CreateDocumentAsync(GetCollectionUri(DocumentCollections.GifCollection), gif);
+        }
+
+        public static async Task<GifImage> GetGif(string id)
+        {
+            IDocumentQuery<GifImage> query = Client.Value
+                .CreateDocumentQuery<GifImage>(GetCollectionUri(DocumentCollections.GifCollection))
+                .Where(x => x.Id == id)
+                .AsDocumentQuery();
+            var result = await query.ExecuteNextAsync<GifImage>();
+            return result.SingleOrDefault();
+        }
+
         private static readonly Lazy<IDocumentClient> Client =
             new Lazy<IDocumentClient>(() => new DocumentClient(ServiceEndpoint, PrimaryKey));
 
