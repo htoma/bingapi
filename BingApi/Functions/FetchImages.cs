@@ -17,7 +17,7 @@ namespace BingApi.Functions
     {        
         [FunctionName("FetchImages")]
         public static async Task<HttpResponseMessage> Run(
-            [HttpTrigger(AuthorizationLevel.Function, "get", Route = "images")]
+            [HttpTrigger(AuthorizationLevel.Function, "post", Route = "images")]
             HttpRequestMessage req, TraceWriter log)
         {
             log.Info($"Get images request from {req.GetKeyId()}");
@@ -37,7 +37,8 @@ namespace BingApi.Functions
                 PrefixKeywords prefixKeywords = await TextAnalyticsApi.GetKeywords(userPrefix.Prefix);
                 
                 // get keywords from user profile
-                var profileKeywords = await ProfileHelper.GetKeywordsFromProfile(userPrefix.UserId);
+                var profile = await ProfileHelper.GetUserProfile(userPrefix.UserId);
+                var profileKeywords = ProfileHelper.GetKeywordsFromProfile(profile);
 
                 var combinedKeywords = CombineKeywords(prefixKeywords, profileKeywords);
 
@@ -52,6 +53,7 @@ namespace BingApi.Functions
                 {
                     Prefix = userPrefix.Prefix,
                     PrefixKeywords = prefixKeywords,
+                    UserProfile = profile,
                     ProfileKeywords = profileKeywords,
                     CombinedKeywords = combinedKeywords,
                     Images = images

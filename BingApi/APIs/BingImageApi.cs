@@ -28,9 +28,8 @@ namespace BingApi.APIs
 
         public static async Task<KeywordGifImages[]> GetImages(string[] keywords, int maxImagesPerKeyword)
         {
-            // work backwards, last word is the most important
             var result = new List<KeywordGifImages>();
-            foreach (var keyword in keywords.Reverse())
+            foreach (var keyword in keywords)
             {
                 GifImage[] images = await BingImageSearch(keyword, maxImagesPerKeyword);
                 result.Add(new KeywordGifImages

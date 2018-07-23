@@ -51,7 +51,7 @@ namespace BingApi.APIs
                 if (lastTextWord != lastKeywordLastWord)
                 {
                     keywords.Add(lastTextWord);
-                    result.LastWordAdded = true;
+                    result.LastWordAddedToKeywords = true;
                 }
             }
 
