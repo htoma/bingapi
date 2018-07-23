@@ -63,7 +63,7 @@ namespace BingApi.APIs
                 var content = await response.Content.ReadAsStringAsync();
 
                 var value = JsonConvert.DeserializeObject<ApiImage>(content);
-                return value.Value.Take(max).ToArray();
+                return value.Value.Where(x => x.ContentUrl.Contains("media.giphy.com")).Take(max).ToArray();
             }
             catch (Exception ex)
             {
