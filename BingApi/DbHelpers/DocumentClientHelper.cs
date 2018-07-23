@@ -15,10 +15,10 @@ namespace BingApi.DbHelpers
         private static readonly Uri ServiceEndpoint = new Uri(ConfigurationManager.AppSettings["DbServiceEndpoint"]);
         private static readonly string PrimaryKey = ConfigurationManager.AppSettings["DbPrimaryKey"];
 
-        public static async Task InsertDoc<T>(string collection, T doc) where T : IUserDocument
+        public static async Task UpsertDoc<T>(string collection, T doc) where T : IUserDocument
         {
             doc.Timestamp = DateTime.UtcNow;
-            await Client.Value.CreateDocumentAsync(GetCollectionUri(collection), doc);
+            await Client.Value.UpsertDocumentAsync(GetCollectionUri(collection), doc);
         }
 
         public static async Task<List<T>> GetMostRecentDocuments<T>(

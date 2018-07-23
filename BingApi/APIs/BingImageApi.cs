@@ -2,8 +2,12 @@ using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using System.Configuration;
+using System.IO;
+using System.IO.Compression;
 using System.Linq;
 using System.Net.Http;
+using System.Text.RegularExpressions;
+using BingApi.DbHelpers;
 using BingApi.DbModel;
 using BingApi.Model;
 using Newtonsoft.Json;
@@ -13,6 +17,8 @@ namespace BingApi.APIs
     public class BingImageApi
     {
         private const string UriBase = "https://api.cognitive.microsoft.com/bing/v7.0/images/search";
+
+        private const string Pattern = @"<meta name=""keywords"" content=""((.+?)+)"">";
 
         private static readonly Lazy<HttpClient> Client = new Lazy<HttpClient>(() => new HttpClient());
 
@@ -68,6 +74,8 @@ namespace BingApi.APIs
                 foreach (var image in images)
                 {
                     AddIdToImage(image);
+                    await AddKeywordsToImage(image);
+                    await DocumentClientHelper.StoreGif(image);
                 }
 
                 return images.ToArray();
@@ -83,6 +91,41 @@ namespace BingApi.APIs
             var id = image.ContentUrl.Split(new[] {"/"}, StringSplitOptions.RemoveEmptyEntries);
             //https://media.giphy.com/media/zHRHMP5jzXdxm/giphy.gif
             image.Id = id[3];
+        }
+
+        private static async Task AddKeywordsToImage(GifImage image)
+        {
+            image.Keywords = await GetKeywords(image);
+        }
+
+        private static async Task<string> GetKeywords(GifImage gif)
+        {
+            string input = await GetResponse(gif.ContentUrl);
+            MatchCollection matches = Regex.Matches(input, Pattern);
+            return matches[0].Groups[1].Value;
+        }
+
+        private static async Task<string> GetResponse(string url)
+        {
+            using (var request = new HttpRequestMessage(HttpMethod.Get, new Uri(url)))
+            {
+                request.Headers.TryAddWithoutValidation("Accept", "text/html,application/xhtml+xml,application/xml");
+                request.Headers.TryAddWithoutValidation("Accept-Encoding", "gzip, deflate");
+                request.Headers.TryAddWithoutValidation("User-Agent",
+                    "Mozilla/5.0 (Windows NT 6.2; WOW64; rv:19.0) Gecko/20100101 Firefox/19.0");
+                request.Headers.TryAddWithoutValidation("Accept-Charset", "ISO-8859-1");
+
+                using (var response = await Client.Value.SendAsync(request).ConfigureAwait(false))
+                {
+                    response.EnsureSuccessStatusCode();
+                    using (var responseStream = await response.Content.ReadAsStreamAsync().ConfigureAwait(false))
+                    using (var decompressedStream = new GZipStream(responseStream, CompressionMode.Decompress))
+                    using (var streamReader = new StreamReader(decompressedStream))
+                    {
+                        return await streamReader.ReadToEndAsync().ConfigureAwait(false);
+                    }
+                }
+            }
         }
     }
 }

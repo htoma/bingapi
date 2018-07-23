@@ -37,13 +37,13 @@ namespace BingApi.Functions
                     case "keyword":
                     {
                         var payload = JsonConvert.DeserializeObject<SearchKeyword>(content);
-                        await DocumentClientHelper.InsertDoc(DocumentCollections.SearchKeywordsCollection, payload);
+                        await DocumentClientHelper.UpsertDoc(DocumentCollections.SearchKeywordsCollection, payload);
                         break;
                     }
                     case "gif":
                     {
                         var payload = JsonConvert.DeserializeObject<GifSelection>(content);
-                        await DocumentClientHelper.InsertDoc(DocumentCollections.GifSelectionCollection, payload);
+                        await DocumentClientHelper.UpsertDoc(DocumentCollections.GifSelectionCollection, payload);
                         break;
                     }
                     default:
