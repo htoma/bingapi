@@ -14,7 +14,7 @@ using Newtonsoft.Json;
 namespace BingApi.Functions
 {
     public static class FetchImages
-    {        
+    {
         [FunctionName("FetchImages")]
         public static async Task<HttpResponseMessage> Run(
             [HttpTrigger(AuthorizationLevel.Function, "post", Route = "images")]

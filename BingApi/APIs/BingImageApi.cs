@@ -20,6 +20,8 @@ namespace BingApi.APIs
 
         private const string Pattern = @"<meta name=""keywords"" content=""((.+?)+)"">";
 
+        private const string GiphyDomain = "media.giphy.com";
+
         private static readonly Lazy<HttpClient> Client = new Lazy<HttpClient>(() => new HttpClient());
 
         private static HttpClient GetClient()
@@ -70,7 +72,7 @@ namespace BingApi.APIs
                 var content = await response.Content.ReadAsStringAsync();
 
                 var value = JsonConvert.DeserializeObject<ApiImage>(content);
-                var images = value.Value.Where(x => x.ContentUrl.Contains("media.giphy.com")).Take(max).ToList();
+                var images = value.Value.Where(x => x.ContentUrl.Contains(GiphyDomain)).Take(max).ToList();
                 foreach (var image in images)
                 {
                     AddIdToImage(image);
@@ -86,11 +88,20 @@ namespace BingApi.APIs
             }
         }
 
+        public static string ExtractIdFromUrl(string url)
+        {
+            if (!url.Contains(GiphyDomain))
+            {
+                return null;
+            }
+            var id = url.Split(new[] { "/" }, StringSplitOptions.RemoveEmptyEntries);
+            //https://media.giphy.com/media/zHRHMP5jzXdxm/giphy.gif
+            return id[3];
+        }
+
         private static void AddIdToImage(GifImage image)
         {
-            var id = image.ContentUrl.Split(new[] {"/"}, StringSplitOptions.RemoveEmptyEntries);
-            //https://media.giphy.com/media/zHRHMP5jzXdxm/giphy.gif
-            image.Id = id[3];
+            image.Id = ExtractIdFromUrl(image.ContentUrl);
         }
 
         private static async Task AddKeywordsToImage(GifImage image)
@@ -125,6 +136,36 @@ namespace BingApi.APIs
                         return await streamReader.ReadToEndAsync().ConfigureAwait(false);
                     }
                 }
+            }
+        }
+
+        public static async Task<bool> IsImageOk(string url)
+        {
+            var id = ExtractIdFromUrl(url);
+            if (id == null)
+            {
+                return false;
+            }
+
+            try
+            {
+                var image = await DocumentClientHelper.GetGifByUrl(url);
+                if (image == null)
+                {
+                    var newImage = new GifImage
+                    {
+                        Id = id,
+                        ContentUrl = url
+                    };
+                    var keywords = await GetKeywords(newImage);
+                    newImage.Keywords = keywords;
+                    await DocumentClientHelper.StoreGif(newImage);                    
+                }
+                return true;
+            }
+            catch (Exception ex)
+            {
+                return false;
             }
         }
     }

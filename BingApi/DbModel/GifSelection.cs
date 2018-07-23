@@ -9,7 +9,6 @@ namespace BingApi.DbModel
     {
         public string UserId { get; set; }
         public DateTime Timestamp { get; set; }
-        public string[] Keywords { get; set; }
-        public string AccentColor { get; set; }
+        public string Url { get; set; }
     }
 }

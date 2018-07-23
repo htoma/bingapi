@@ -2,6 +2,7 @@ using System;
 using System.Net;
 using System.Net.Http;
 using System.Threading.Tasks;
+using BingApi.APIs;
 using BingApi.DbHelpers;
 using BingApi.DbModel;
 using Microsoft.Azure.WebJobs;
@@ -43,7 +44,14 @@ namespace BingApi.Functions
                     case "gif":
                     {
                         var payload = JsonConvert.DeserializeObject<GifSelection>(content);
-                        await DocumentClientHelper.UpsertDoc(DocumentCollections.GifSelectionCollection, payload);
+                        // image may not be from giphy
+                        // if the image is from giphy and we don't have it, we need to store it
+                        var isImageOk = await BingImageApi.IsImageOk(payload.Url);
+                        if (isImageOk)
+                        {
+                            await DocumentClientHelper.UpsertDoc(DocumentCollections.GifSelectionCollection, payload);
+                        }
+
                         break;
                     }
                     default:

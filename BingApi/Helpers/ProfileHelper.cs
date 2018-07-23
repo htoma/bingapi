@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using BingApi.DbHelpers;
@@ -18,14 +19,15 @@ namespace BingApi.Helpers
                     userId, historyLength);
             List<GifSelection> gifSelections = await DocumentClientHelper.GetMostRecentDocuments<GifSelection>(
                 DocumentCollections.GifSelectionCollection, userId, historyLength);
+            List<GifImage> gifs = await DocumentClientHelper.GetGifs(gifSelections.Select(x => x.Url).ToList());
             return new UserProfile
             {
                 SearchKeywords = searchKeywords.Select(x => x.Keyword).Where(x => !string.IsNullOrEmpty(x)).Distinct()
                     .ToArray(),
-                GifSelectionKeywords = gifSelections.SelectMany(x => x.Keywords).Where(x => !string.IsNullOrEmpty(x))
-                    .Distinct().ToArray(),
-                AccentColors = gifSelections.Select(x => x.AccentColor).Where(x => !string.IsNullOrEmpty(x)).Distinct()
-                    .ToArray()
+                GifSelectionKeywords =
+                    gifs.SelectMany(x => x.Keywords.Split(new[] {","}, StringSplitOptions.RemoveEmptyEntries))
+                        .Where(x => !string.IsNullOrEmpty(x)).Distinct().ToArray(),
+                AccentColors = gifs.Select(x => x.AccentColor).Where(x => !string.IsNullOrEmpty(x)).Distinct().ToArray()
             };
         }
 

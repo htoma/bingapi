@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Configuration;
 using System.Linq;
 using System.Threading.Tasks;
+using BingApi.APIs;
 using BingApi.DbModel;
 using Microsoft.Azure.Documents;
 using Microsoft.Azure.Documents.Client;
@@ -40,14 +41,31 @@ namespace BingApi.DbHelpers
             await Client.Value.CreateDocumentAsync(GetCollectionUri(DocumentCollections.GifCollection), gif);
         }
 
-        public static async Task<GifImage> GetGif(string id)
+        public static async Task<GifImage> GetGifByUrl(string url)
         {
+            var id = BingImageApi.ExtractIdFromUrl(url);
+            if (id == null)
+            {
+                return null;
+            }
+
             IDocumentQuery<GifImage> query = Client.Value
                 .CreateDocumentQuery<GifImage>(GetCollectionUri(DocumentCollections.GifCollection))
                 .Where(x => x.Id == id)
                 .AsDocumentQuery();
             var result = await query.ExecuteNextAsync<GifImage>();
             return result.SingleOrDefault();
+        }
+
+        public static async Task<List<GifImage>> GetGifs(List<string> urls)
+        {
+            var ids = urls.Select(BingImageApi.ExtractIdFromUrl).ToList();
+            IDocumentQuery<GifImage> query = Client.Value
+                .CreateDocumentQuery<GifImage>(GetCollectionUri(DocumentCollections.GifCollection))
+                .Where(x => ids.Contains(x.Id))
+                .AsDocumentQuery();
+            var result = await query.ExecuteNextAsync<GifImage>();
+            return result.ToList();
         }
 
         private static readonly Lazy<IDocumentClient> Client =
