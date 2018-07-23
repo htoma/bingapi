@@ -29,8 +29,9 @@ namespace BingApi.Helpers
             };
         }
 
-        public static string[] GetKeywordsFromProfile(UserProfile profile)
+        public static async Task<string[]> GetKeywordsFromProfile(string userId)
         {
+            var profile = await GetUserProfile(userId);
             // add custom logic for combining search keyword and gif selection keywords
             return profile.SearchKeywords.Concat(profile.GifSelectionKeywords).Distinct().ToArray();
         }

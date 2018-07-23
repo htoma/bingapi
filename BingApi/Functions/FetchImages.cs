@@ -1,4 +1,5 @@
 using System;
+using System.Linq;
 using BingApi.Model;
 using System.Net;
 using System.Net.Http;
@@ -8,6 +9,7 @@ using BingApi.Helpers;
 using Microsoft.Azure.WebJobs;
 using Microsoft.Azure.WebJobs.Extensions.Http;
 using Microsoft.Azure.WebJobs.Host;
+using Newtonsoft.Json;
 
 namespace BingApi.Functions
 {
@@ -29,18 +31,29 @@ namespace BingApi.Functions
 
             try
             {
-                Keywords keywords = await TextAnalyticsApi.GetKeywords(payload);
+                var userPrefix = JsonConvert.DeserializeObject<UserPrefix>(payload);
+
+                // get  keywords for prefix using Text Analytics
+                PrefixKeywords prefixKeywords = await TextAnalyticsApi.GetKeywords(userPrefix.Prefix);
+                
+                // get keywords from user profile
+                var profileKeywords = await ProfileHelper.GetKeywordsFromProfile(userPrefix.UserId);
+
+                var combinedKeywords = CombineKeywords(prefixKeywords, profileKeywords);
 
                 if (!int.TryParse(req.GetQueryParameter("maxImagesPerKeyword"), out int maxImagesPerKeyword))
                 {
                     maxImagesPerKeyword = 3;
                 }
 
-                GifImage[] images = await BingImageApi.GetImages(keywords.AllKeywords, maxImagesPerKeyword);
+                KeywordGifImages[] images = await BingImageApi.GetImages(combinedKeywords, maxImagesPerKeyword);
 
                 return req.CreateResponse(HttpStatusCode.OK, new ResultExplained
                 {
-                    Keywords = keywords,
+                    Prefix = userPrefix.Prefix,
+                    PrefixKeywords = prefixKeywords,
+                    ProfileKeywords = profileKeywords,
+                    CombinedKeywords = combinedKeywords,
                     Images = images
                 });
             }
@@ -48,6 +61,12 @@ namespace BingApi.Functions
             {
                 return req.CreateErrorResponse(HttpStatusCode.InternalServerError, ex.Message);
             }
+        }
+
+        private static string[] CombineKeywords(PrefixKeywords keywords, string[] profileKeywords)
+        {
+            // do we take everything? all keywords from user input and all keywords from users' profile?
+            return keywords.AllKeywords.Concat(profileKeywords).Distinct().ToArray();
         }
     }
 }

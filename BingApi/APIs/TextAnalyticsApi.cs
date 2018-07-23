@@ -3,13 +3,12 @@ using System.Collections.Generic;
 using System.Configuration;
 using System.Linq;
 using System.Threading.Tasks;
+using BingApi.Model;
 using Microsoft.Azure.CognitiveServices.Language.TextAnalytics;
 using Microsoft.Azure.CognitiveServices.Language.TextAnalytics.Models;
 
 namespace BingApi.APIs
 {
-    using BingApi.Model;
-
     public class TextAnalyticsApi
     {
         private static readonly Lazy<ITextAnalyticsAPI> Client = new Lazy<ITextAnalyticsAPI>(
@@ -24,7 +23,7 @@ namespace BingApi.APIs
             return Client.Value;
         }
 
-        public static async Task<Keywords> GetKeywords(string payload)
+        public static async Task<PrefixKeywords> GetKeywords(string payload)
         {
             KeyPhraseBatchResult batchResult = await GetClient().KeyPhrasesAsync(
                           new MultiLanguageBatchInput(
@@ -35,27 +34,14 @@ namespace BingApi.APIs
             
             var keywords = batchResult.Documents.SelectMany(x => x.KeyPhrases).Distinct().ToList();
 
-            var result = new Keywords
+            var result = new PrefixKeywords
                 {
                     TextAnalyticsKeywords = keywords.ToArray()
                 };
 
-            const int MaxWordsBeforeFilteringOnText = 4;
-            if (keywords.Count == 0) 
+            if (keywords.Count == 0)
             {
-                // if no keywords found
-                if (CountWords(payload) <= MaxWordsBeforeFilteringOnText)
-                {
-                    // less than 4 words in the text, we'll search on the whole text
-                    keywords.Add(payload);
-                    result.EntirePhrase = true;
-                }
-                else
-                {
-                    // search on the last word
-                    keywords.Add(GetLastWord(payload));
-                    result.LastWord = true;
-                }
+                keywords.Add(GetLastWord(payload));
             }
             else
             {
@@ -65,7 +51,7 @@ namespace BingApi.APIs
                 if (lastTextWord != lastKeywordLastWord)
                 {
                     keywords.Add(lastTextWord);
-                    result.LastWord = true;
+                    result.LastWordAdded = true;
                 }
             }
 

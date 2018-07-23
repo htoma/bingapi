@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Threading.Tasks;
 using System.Configuration;
 using System.Linq;
@@ -25,14 +26,21 @@ namespace BingApi.APIs
             return Client.Value;
         }
 
-        public static async Task<GifImage[]> GetImages(string[] keywords, int maxImagesPerKeyword)
+        public static async Task<KeywordGifImages[]> GetImages(string[] keywords, int maxImagesPerKeyword)
         {
             // work backwards, last word is the most important
-            var result = keywords.Reverse().Select(x => BingImageSearch(x, maxImagesPerKeyword));
-            GifImage[][] images = await Task.WhenAll(result);
+            var result = new List<KeywordGifImages>();
+            foreach (var keyword in keywords.Reverse())
+            {
+                GifImage[] images = await BingImageSearch(keyword, maxImagesPerKeyword);
+                result.Add(new KeywordGifImages
+                {
+                    Keyword = keyword,
+                    Images = images
+                });
+            }
 
-            // todo: distinct on url
-            return images.SelectMany(x => x).ToArray();
+            return result.ToArray();
         }
 
         private static async Task<GifImage[]> BingImageSearch(string searchQuery, int max)
