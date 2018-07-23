@@ -1,21 +1,21 @@
+using System;
 using BingApi.Model;
+using System.Net;
+using System.Net.Http;
+using System.Threading.Tasks;
+using BingApi.APIs;
+using BingApi.Helpers;
+using Microsoft.Azure.WebJobs;
+using Microsoft.Azure.WebJobs.Extensions.Http;
+using Microsoft.Azure.WebJobs.Host;
 
 namespace BingApi.Functions
 {
-    using System.Net;
-    using System.Net.Http;
-    using System.Threading.Tasks;
-    using APIs;
-    using Helpers;
-    using Microsoft.Azure.WebJobs;
-    using Microsoft.Azure.WebJobs.Extensions.Http;
-    using Microsoft.Azure.WebJobs.Host;
-
     public static class FetchImages
     {        
         [FunctionName("FetchImages")]
         public static async Task<HttpResponseMessage> Run(
-            [HttpTrigger(AuthorizationLevel.Function, "post", Route = "images")]
+            [HttpTrigger(AuthorizationLevel.Function, "get", Route = "images")]
             HttpRequestMessage req, TraceWriter log)
         {
             log.Info($"Get images request from {req.GetKeyId()}");
@@ -27,20 +27,27 @@ namespace BingApi.Functions
 
             string payload = await req.Content.ReadAsStringAsync();
 
-            Keywords keywords = await TextAnalyticsApi.GetKeywords(payload);
-
-            if (!int.TryParse(req.GetQueryParameter("maxImagesPerKeyword"), out int maxImagesPerKeyword))
+            try
             {
-                maxImagesPerKeyword = 3;
-            }
+                Keywords keywords = await TextAnalyticsApi.GetKeywords(payload);
 
-            GifImage[] images = await BingImageApi.GetImages(keywords.AllKeywords, maxImagesPerKeyword);
+                if (!int.TryParse(req.GetQueryParameter("maxImagesPerKeyword"), out int maxImagesPerKeyword))
+                {
+                    maxImagesPerKeyword = 3;
+                }
 
-            return req.CreateResponse(HttpStatusCode.OK, new ResultExplained
+                GifImage[] images = await BingImageApi.GetImages(keywords.AllKeywords, maxImagesPerKeyword);
+
+                return req.CreateResponse(HttpStatusCode.OK, new ResultExplained
                 {
                     Keywords = keywords,
                     Images = images
                 });
+            }
+            catch (Exception ex)
+            {
+                return req.CreateErrorResponse(HttpStatusCode.InternalServerError, ex.Message);
+            }
         }
     }
 }

@@ -32,19 +32,22 @@ namespace BingApi.Functions
 
             try
             {
-                if (action == "keyword")
+                switch (action)
                 {
-                    var payload = JsonConvert.DeserializeObject<SearchKeyword>(content);
-                    await DocumentClientHelper.InsertDoc(DocumentCollections.SearchKeywordsCollection, payload);
-                }
-                else if (action == "gif")
-                {
-                    var payload = JsonConvert.DeserializeObject<GifSelection>(content);
-                    await DocumentClientHelper.InsertDoc(DocumentCollections.GifSelectionCollection, payload);
-                }
-                else
-                {
-                    return req.CreateErrorResponse(HttpStatusCode.BadRequest, "Use /keyword or /gif");
+                    case "keyword":
+                    {
+                        var payload = JsonConvert.DeserializeObject<SearchKeyword>(content);
+                        await DocumentClientHelper.InsertDoc(DocumentCollections.SearchKeywordsCollection, payload);
+                        break;
+                    }
+                    case "gif":
+                    {
+                        var payload = JsonConvert.DeserializeObject<GifSelection>(content);
+                        await DocumentClientHelper.InsertDoc(DocumentCollections.GifSelectionCollection, payload);
+                        break;
+                    }
+                    default:
+                        return req.CreateErrorResponse(HttpStatusCode.BadRequest, "Use /keyword or /gif");
                 }
 
                 return req.CreateResponse(HttpStatusCode.OK);
