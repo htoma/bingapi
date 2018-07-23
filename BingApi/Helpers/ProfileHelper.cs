@@ -25,7 +25,7 @@ namespace BingApi.Helpers
                 SearchKeywords = searchKeywords.Select(x => x.Keyword).Where(x => !string.IsNullOrEmpty(x)).Distinct()
                     .ToArray(),
                 GifSelectionKeywords =
-                    gifs.SelectMany(x => x.Keywords.Split(new[] {","}, StringSplitOptions.RemoveEmptyEntries))
+                    gifs.SelectMany(x => x.Keywords.Split(new[] {",", " "}, StringSplitOptions.RemoveEmptyEntries))
                         .Where(x => !string.IsNullOrEmpty(x)).Distinct().ToArray(),
                 AccentColors = gifs.Select(x => x.AccentColor).Where(x => !string.IsNullOrEmpty(x)).Distinct().ToArray()
             };
