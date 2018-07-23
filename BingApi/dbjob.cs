@@ -1,5 +1,4 @@
 using System;
-using System.Linq;
 using System.Net;
 using System.Net.Http;
 using System.Threading.Tasks;
@@ -8,7 +7,7 @@ using BingApi.DbModel;
 using Microsoft.Azure.WebJobs;
 using Microsoft.Azure.WebJobs.Extensions.Http;
 using Microsoft.Azure.WebJobs.Host;
-using Microsoft.Azure.Documents;
+using Newtonsoft.Json;
 
 namespace BingApi
 {
@@ -16,21 +15,19 @@ namespace BingApi
     {
         [FunctionName("dbjob")]
         public static async Task<HttpResponseMessage> Run(
-            [HttpTrigger(AuthorizationLevel.Function, "get", "post", Route = null)]
+            [HttpTrigger(AuthorizationLevel.Function, "post", Route = null)]
             HttpRequestMessage req,
             TraceWriter log)
         {
-            var doc = new UserSearchKeyword
-            {
-                UserId = "101",
-                Keyword = req.GetQueryNameValuePairs().First(x => x.Key == "name").Value,
-                Timestamp = DateTime.UtcNow
-            };
+            var content = await req.Content.ReadAsStringAsync();
+            var payload = JsonConvert.DeserializeObject<UserSearchKeyword>(content);
+            payload.Timestamp = DateTime.UtcNow;
 
-            //await DocumentClientHelper.InsertDoc(DocumentCollections.SearchKeywordsCollection, doc);
+            await DocumentClientHelper.InsertDoc(DocumentCollections.SearchKeywordsCollection, payload);
 
-            var results = await DocumentClientHelper.GetDocuments(DocumentCollections.SearchKeywordsCollection,
-                (UserSearchKeyword x) => x.Timestamp, 5);
+            var results =
+                await DocumentClientHelper.GetMostRecentDocuments<UserSearchKeyword>(
+                    DocumentCollections.SearchKeywordsCollection, payload.UserId, 5);
 
             return req.CreateResponse(HttpStatusCode.OK, results);
         }

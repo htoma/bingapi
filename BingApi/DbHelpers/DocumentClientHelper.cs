@@ -2,9 +2,8 @@
 using System.Collections.Generic;
 using System.Configuration;
 using System.Linq;
-using System.Linq.Expressions;
 using System.Threading.Tasks;
-using BingApi.Helpers;
+using BingApi.DbModel;
 using Microsoft.Azure.Documents;
 using Microsoft.Azure.Documents.Client;
 using Microsoft.Azure.Documents.Linq;
@@ -21,13 +20,14 @@ namespace BingApi.DbHelpers
             var result = await Client.Value.CreateDocumentAsync(GetCollectionUri(collection), doc);
         }
 
-        public static async Task<List<T>> GetDocuments<T>(
+        public static async Task<List<T>> GetMostRecentDocuments<T>(
             string collection,
-            Expression<Func<T, DateTime>> filter,
-            int max)
+            string userId,
+            int max) where T : IUserDocument
         {
             IDocumentQuery<T> query = Client.Value.CreateDocumentQuery<T>(GetCollectionUri(collection))
-                .OrderByDescending(filter)
+                .Where(x => x.UserId == userId)
+                .OrderByDescending(x => x.Timestamp)
                 .Take(max)
                 .AsDocumentQuery();
             var result = await query.ExecuteNextAsync<T>();
