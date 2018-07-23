@@ -1,11 +1,13 @@
+using System;
 using System.Net;
 using System.Net.Http;
 using System.Threading.Tasks;
+using BingApi.DbHelpers;
+using BingApi.DbModel;
 using Microsoft.Azure.WebJobs;
 using Microsoft.Azure.WebJobs.Extensions.Http;
 using Microsoft.Azure.WebJobs.Host;
 using BingApi.Helpers;
-using BingApi.Model;
 using Newtonsoft.Json;
 
 namespace BingApi.Functions
@@ -14,11 +16,12 @@ namespace BingApi.Functions
     {
         [FunctionName("SelectImage")]
         public static async Task<HttpResponseMessage> Run(
-            [HttpTrigger(AuthorizationLevel.Function, "post", Route = "selections")]
+            [HttpTrigger(AuthorizationLevel.Function, "post", Route = "selections/{action}")]
             HttpRequestMessage req,
+            string action,
             TraceWriter log)
         {
-            log.Info($"Select image request from {req.GetKeyId()}");
+            log.Info($"Selection request from {req.GetKeyId()}");
 
             if (!req.IsKeyId(Constants.Mobile))
             {
@@ -26,9 +29,30 @@ namespace BingApi.Functions
             }
 
             var content = await req.Content.ReadAsStringAsync();
-            var imageSelection = JsonConvert.DeserializeObject<ImageSelection>(content);
 
-            return req.CreateResponse(HttpStatusCode.OK);
+            try
+            {
+                if (action == "keyword")
+                {
+                    var payload = JsonConvert.DeserializeObject<SearchKeyword>(content);
+                    await DocumentClientHelper.InsertDoc(DocumentCollections.SearchKeywordsCollection, payload);
+                }
+                else if (action == "gif")
+                {
+                    var payload = JsonConvert.DeserializeObject<GifSelection>(content);
+                    await DocumentClientHelper.InsertDoc(DocumentCollections.GifSelectionCollection, payload);
+                }
+                else
+                {
+                    return req.CreateErrorResponse(HttpStatusCode.BadRequest, "Use /keyword or /gif");
+                }
+
+                return req.CreateResponse(HttpStatusCode.OK);
+            }
+            catch (Exception ex)
+            {
+                return req.CreateErrorResponse(HttpStatusCode.InternalServerError, ex.Message);
+            }
         }
     }
 }
