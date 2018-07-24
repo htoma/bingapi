@@ -22,6 +22,8 @@ namespace BingApi.APIs
 
         private const string GiphyDomain = "media.giphy.com";
 
+        private const int LimitKeywordsPerImage = 3;
+
         private static readonly Lazy<HttpClient> Client = new Lazy<HttpClient>(() => new HttpClient());
 
         private static HttpClient GetClient()
@@ -77,7 +79,7 @@ namespace BingApi.APIs
                     AddIdToImage(image);
                     if (existing.ContainsKey(image.ContentUrl))
                     {
-                        image.Keywords = existing[image.ContentUrl].Keywords;
+                        image.Keywords = existing[image.ContentUrl].Keywords.Take(LimitKeywordsPerImage).ToArray();
                     }
                     else
                     {
