@@ -72,7 +72,7 @@ namespace BingApi.APIs
                 var content = await response.Content.ReadAsStringAsync();
 
                 var value = JsonConvert.DeserializeObject<ApiImage>(content);
-                var images = value.Value.Where(x => x.ContentUrl.Contains(GiphyDomain)).Take(max).ToList();
+                List<GifImage> images = value.Value.Where(x => x.ContentUrl.Contains(GiphyDomain)).Take(max).ToList();
                 foreach (var image in images)
                 {
                     AddIdToImage(image);

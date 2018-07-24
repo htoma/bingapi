@@ -8,6 +8,7 @@ namespace BingApi.DbModel
     {
         public string Id { get; set; }
         public string ContentUrl { get; set; }
+        public string ThumbnailUrl { get; set; }
         public int Width { get; set; }
         public int Height { get; set; }
         public string AccentColor { get; set; }
