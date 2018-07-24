@@ -22,6 +22,8 @@ namespace BingApi.APIs
 
         private const string GiphyDomain = "media.giphy.com";
 
+        private static readonly string[] CommonWords = { "gif", "animated" };
+
         private static readonly Lazy<HttpClient> Client = new Lazy<HttpClient>(() => new HttpClient());
 
         private static HttpClient GetClient()
@@ -73,11 +75,21 @@ namespace BingApi.APIs
 
                 var value = JsonConvert.DeserializeObject<ApiImage>(content);
                 List<GifImage> images = value.Value.Where(x => x.ContentUrl.Contains(GiphyDomain)).Take(max).ToList();
+                var existing =
+                    (await DocumentClientHelper.GetGifs(images.Select(x => x.ContentUrl).ToList())).ToDictionary(x =>
+                        x.ContentUrl);
                 foreach (var image in images)
                 {
                     AddIdToImage(image);
-                    await AddKeywordsToImage(image);
-                    await DocumentClientHelper.StoreGif(image);
+                    if (existing.ContainsKey(image.ContentUrl))
+                    {
+                        image.Keywords = existing[image.ContentUrl].Keywords;
+                    }
+                    else
+                    {
+                        await AddKeywordsToImage(image);
+                        await DocumentClientHelper.StoreGif(image);
+                    }
                 }
 
                 return images.ToArray();
@@ -109,11 +121,13 @@ namespace BingApi.APIs
             image.Keywords = await GetKeywords(image);
         }
 
-        private static async Task<string> GetKeywords(GifImage gif)
-        {
-            string input = await GetResponse(gif.ContentUrl);
+        private static async Task<string[]> GetKeywords(GifImage gif)
+        {            
+        string input = await GetResponse(gif.ContentUrl);
             MatchCollection matches = Regex.Matches(input, Pattern);
-            return matches[0].Groups[1].Value;
+            var keywords = matches[0].Groups[1].Value.Split(new[] {",", " "}, StringSplitOptions.RemoveEmptyEntries)
+                .Select(x => x.ToLower()).Where(x => !CommonWords.Contains(x)).ToArray();
+            return keywords;
         }
 
         private static async Task<string> GetResponse(string url)

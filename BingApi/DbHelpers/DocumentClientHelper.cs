@@ -59,7 +59,7 @@ namespace BingApi.DbHelpers
 
         public static async Task<List<GifImage>> GetGifs(List<string> urls)
         {
-            var ids = urls.Select(BingImageApi.ExtractIdFromUrl).ToList();
+            var ids = urls.Select(BingImageApi.ExtractIdFromUrl);
             IDocumentQuery<GifImage> query = Client.Value
                 .CreateDocumentQuery<GifImage>(GetCollectionUri(DocumentCollections.GifCollection))
                 .Where(x => ids.Contains(x.Id))

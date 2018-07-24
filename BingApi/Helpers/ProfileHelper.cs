@@ -1,5 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using BingApi.DbHelpers;
@@ -25,8 +24,7 @@ namespace BingApi.Helpers
                 SearchKeywords = searchKeywords.Select(x => x.Keyword).Where(x => !string.IsNullOrEmpty(x)).Distinct()
                     .ToArray(),
                 GifSelectionKeywords =
-                    gifs.SelectMany(x => x.Keywords.Split(new[] {",", " "}, StringSplitOptions.RemoveEmptyEntries))
-                        .Where(x => !string.IsNullOrEmpty(x)).Distinct().ToArray(),
+                    gifs.SelectMany(x => x.Keywords).Where(x => !string.IsNullOrEmpty(x)).Distinct().ToArray(),
                 AccentColors = gifs.Select(x => x.AccentColor).Where(x => !string.IsNullOrEmpty(x)).Distinct().ToArray()
             };
         }
