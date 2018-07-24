@@ -43,12 +43,13 @@ namespace BingApi.Functions
 
                 var combinedKeywords = CombineKeywords(prefixKeywords, profileKeywords);
 
-                if (!int.TryParse(req.GetQueryParameter("maxImagesPerKeyword"), out int maxImagesPerKeyword))
+                if (!int.TryParse(req.GetQueryParameter("totalImages"), out int totalImages))
                 {
-                    maxImagesPerKeyword = 1;
+                    totalImages = 6;
                 }
 
-                GifImage[] images = await BingImageApi.GetImages(combinedKeywords, maxImagesPerKeyword);
+                GifImage[] images =
+                    await BingImageApi.GetImages(combinedKeywords, totalImages / combinedKeywords.Length);
                 GifImage[] orderedImages = await OrderImages(images, prefixKeywords.AllKeywords);
 
                 return req.CreateResponse(HttpStatusCode.OK, new ResultExplained
@@ -69,11 +70,11 @@ namespace BingApi.Functions
 
         private static async Task<GifImage[]> OrderImages(GifImage[] images, string[] prefixKeywords)
         {
-            foreach (var image in images)
-            {
-                double score = await GetImageScore(image, prefixKeywords);
-                image.Score = score;
-            }
+            //foreach (var image in images)
+            //{
+            //    double score = await GetImageScore(image, prefixKeywords);
+            //    image.Score = score;
+            //}
 
             return images.OrderByDescending(x => x.Score).ToArray();
         }
