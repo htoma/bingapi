@@ -22,7 +22,7 @@ namespace BingApi.APIs
 
         private const string GiphyDomain = "media.giphy.com";
 
-        private static readonly string[] CommonWords = { "gif", "animated" };
+        private static readonly string[] CommonWords = {"gif", "animated", "content"};
 
         private static readonly Lazy<HttpClient> Client = new Lazy<HttpClient>(() => new HttpClient());
 
