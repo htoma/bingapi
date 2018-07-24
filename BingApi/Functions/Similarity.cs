@@ -24,15 +24,25 @@ namespace BingApi.Functions
 
             var orthogonal = await AreOrthogonal(w1, w2);
             var similar = await AreSimilar(w1, w2);
-            
-            return req.CreateResponse(HttpStatusCode.OK, $"Similar: {similar}, Orthogonal: {orthogonal}");
+            var highSimilarityScore = await HighSimilarityScore(w1, w2);
+
+            return req.CreateResponse(HttpStatusCode.OK,
+                $"Similar: {similar}, Orthogonal: {orthogonal}, High score: {highSimilarityScore}");
+        }
+
+        public static async Task<double> HighSimilarityScore(string word1, string word2)
+        {
+            var scores = new[] { "wup", "lin", "jcn" }.Select(x => GetScore(Client, x, word1, word2))
+                .ToArray();
+            var result = (await Task.WhenAll(scores)).ToDictionary(x => x.Coef, x => x.Value);
+            return (result["wup"] + result["lin"]) / 2 * (result["jcn"] < 0.25 ? result["jcn"] : 1);
         }
 
         public static async Task<bool> AreSimilar(string word1, string word2)
         {
-            var similar = new[] {"wup", "jcn", "lch", "lin", "res"}.Select(x => GetScore(Client, x, word1, word2))
+            var scores = new[] {"wup", "jcn", "lch", "lin", "res"}.Select(x => GetScore(Client, x, word1, word2))
                 .ToArray();
-            var result = (await Task.WhenAll(similar)).ToDictionary(x => x.Coef, x => x.Value);
+            var result = (await Task.WhenAll(scores)).ToDictionary(x => x.Coef, x => x.Value);
             var sum = 0;
             if (result["wup"] >= 0.75)
             {
@@ -60,8 +70,8 @@ namespace BingApi.Functions
 
         public static async Task<bool> AreOrthogonal(string word1, string word2)
         {
-            var orthogonal = new[] {"lesk", "hso"}.Select(x => GetScore(Client, x, word1, word2)).ToArray();
-            var result = (await Task.WhenAll(orthogonal)).ToDictionary(x => x.Coef, x => x.Value);
+            var scores = new[] {"lesk", "hso"}.Select(x => GetScore(Client, x, word1, word2)).ToArray();
+            var result = (await Task.WhenAll(scores)).ToDictionary(x => x.Coef, x => x.Value);
             return result["hso"] <= 2;
         }
 
