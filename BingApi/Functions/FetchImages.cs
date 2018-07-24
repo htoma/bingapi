@@ -45,7 +45,7 @@ namespace BingApi.Functions
 
                 if (!int.TryParse(req.GetQueryParameter("maxImagesPerKeyword"), out int maxImagesPerKeyword))
                 {
-                    maxImagesPerKeyword = 3;
+                    maxImagesPerKeyword = 1;
                 }
 
                 GifImage[] images = await BingImageApi.GetImages(combinedKeywords, maxImagesPerKeyword);
@@ -90,7 +90,7 @@ namespace BingApi.Functions
             {
                 foreach (var keyword in prefixKeywords)
                 {
-                    var score = await Similarity.HighSimilarityScore(word, keyword);
+                    double score = await Similarity.HighSimilarityScore(word, keyword);
                     if (score == 1)
                     {
                         return 1;

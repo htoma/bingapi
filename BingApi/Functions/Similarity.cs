@@ -35,6 +35,11 @@ namespace BingApi.Functions
             var scores = new[] { "wup", "lin", "jcn" }.Select(x => GetScore(Client, x, word1, word2))
                 .ToArray();
             var result = (await Task.WhenAll(scores)).ToDictionary(x => x.Coef, x => x.Value);
+            if (result.Any(x => x.Value == -1))
+            {
+                return 0;
+            }
+
             return (result["wup"] + result["lin"]) / 2 * (result["jcn"] < 0.25 ? result["jcn"] : 1);
         }
 
