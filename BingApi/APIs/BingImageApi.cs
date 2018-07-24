@@ -22,8 +22,6 @@ namespace BingApi.APIs
 
         private const string GiphyDomain = "media.giphy.com";
 
-        private static readonly string[] CommonWords = {"gif", "animated", "content"};
-
         private static readonly Lazy<HttpClient> Client = new Lazy<HttpClient>(() => new HttpClient());
 
         private static HttpClient GetClient()
@@ -123,7 +121,7 @@ namespace BingApi.APIs
             string input = await GetResponse(gif.ContentUrl);
             MatchCollection matches = Regex.Matches(input, Pattern);
             var keywords = matches[0].Groups[1].Value.Split(new[] {",", " "}, StringSplitOptions.RemoveEmptyEntries)
-                .Select(x => x.ToLower()).Where(x => !CommonWords.Contains(x)).ToArray();
+                .Select(x => x.ToLower()).Where(x => !Blacklist.BlacklistWords.Contains(x)).ToArray();
             return keywords;
         }
 
