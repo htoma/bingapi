@@ -68,12 +68,27 @@ namespace BingApi.DbHelpers
             return result.ToList();
         }
 
+        public static async Task<UserProfileWithKeywords> GetUserProfile(string userId)
+        {
+            IDocumentQuery<UserProfileWithKeywords> query = Client.Value
+                .CreateDocumentQuery<UserProfileWithKeywords>(GetCollectionUri(DocumentCollections.ProfileCollection))
+                .Where(x => x.UserId == userId)
+                .AsDocumentQuery();
+            var result = await query.ExecuteNextAsync<UserProfileWithKeywords>();
+            return result.SingleOrDefault();
+        }
+
         private static readonly Lazy<IDocumentClient> Client =
             new Lazy<IDocumentClient>(() => new DocumentClient(ServiceEndpoint, PrimaryKey));
 
         private static Uri GetCollectionUri(string collection)
         {
             return UriFactory.CreateDocumentCollectionUri(DocumentCollections.DbName, collection);
-        }        
+        }
+
+        public static async Task UpsertUserProfile(UserProfileWithKeywords newProfile)
+        {
+            await Client.Value.UpsertDocumentAsync(GetCollectionUri(DocumentCollections.ProfileCollection), newProfile);
+        }
     }
 }

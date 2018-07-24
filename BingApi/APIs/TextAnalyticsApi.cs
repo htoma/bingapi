@@ -39,21 +39,22 @@ namespace BingApi.APIs
                     TextAnalyticsKeywords = keywords.ToArray()
                 };
 
-            if (keywords.Count == 0)
-            {
-                keywords.Add(GetLastWord(payload));
-            }
-            else
-            {
-                // if last word is not part of the last keyword, add it as a keyword
-                var lastKeywordLastWord = GetLastWord(keywords.Last());
-                var lastTextWord = GetLastWord(payload);
-                if (lastTextWord != lastKeywordLastWord)
-                {
-                    keywords.Add(lastTextWord);
-                    result.LastWordAddedToKeywords = true;
-                }
-            }
+            // last word has to be filtered against a blacklist (eg, end of line)
+            //if (keywords.Count == 0)
+            //{
+            //    keywords.Add(GetLastWord(payload));
+            //}
+            //else
+            //{
+            //    // if last word is not part of the last keyword, add it as a keyword
+            //    var lastKeywordLastWord = GetLastWord(keywords.Last());
+            //    var lastTextWord = GetLastWord(payload);
+            //    if (lastTextWord != lastKeywordLastWord)
+            //    {
+            //        keywords.Add(lastTextWord);
+            //        result.LastWordAddedToKeywords = true;
+            //    }
+            //}
 
             result.AllKeywords = keywords.ToArray();
 

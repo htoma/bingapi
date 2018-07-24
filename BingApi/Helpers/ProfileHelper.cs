@@ -9,6 +9,8 @@ namespace BingApi.Helpers
 {
     public static class ProfileHelper
     {
+        private const int MaxProfileKeywords = 3;
+
         public static async Task<UserProfile> GetUserProfile(string userId)
         {
             const int branchLength = 3;
@@ -38,6 +40,33 @@ namespace BingApi.Helpers
         {
             // add custom logic for combining search keyword and gif selection keywords
             return profile.SearchKeywords.Concat(profile.GifSelectionKeywords).Distinct().ToArray();
+        }
+
+        public static async Task UpdateProfile(SearchKeyword payload)
+        {
+            var profile = await DocumentClientHelper.GetUserProfile(payload.UserId);
+            if (profile == null || profile.Keywords.Length == 0)
+            {
+                var newProfile = new UserProfileWithKeywords
+                {
+                    UserId = payload.UserId,
+                    Keywords = new[] {payload.Keyword}
+                };
+                await DocumentClientHelper.UpsertUserProfile(newProfile);
+            }
+            else if (profile.Keywords.Length > 0)
+            {
+                foreach (var keyword in profile.Keywords)
+                {
+                    if (await Functions.Similarity.AreSimilar(keyword, payload.Keyword))
+                    {
+                        return;
+                    }
+                }
+
+                profile.Keywords = new[] {payload.Keyword}.Concat(profile.Keywords).Take(MaxProfileKeywords).ToArray();
+                await DocumentClientHelper.UpsertUserProfile(profile);
+            }
         }
     }
 }

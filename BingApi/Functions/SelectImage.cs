@@ -38,6 +38,7 @@ namespace BingApi.Functions
                     case "keyword":
                     {
                         var payload = JsonConvert.DeserializeObject<SearchKeyword>(content);
+                        await ProfileHelper.UpdateProfile(payload);
                         await DocumentClientHelper.UpsertDoc(DocumentCollections.SearchKeywordsCollection, payload);
                         break;
                     }
