@@ -11,22 +11,24 @@ namespace BingApi.Helpers
     {
         public static async Task<UserProfile> GetUserProfile(string userId)
         {
-            const int historyLength = 3;
+            const int branchLength = 3;
+            
             List<SearchKeyword> searchKeywords =
                 await DocumentClientHelper.GetMostRecentDocuments<SearchKeyword>(
                     DocumentCollections.SearchKeywordsCollection,
-                    userId, historyLength);
+                    userId, branchLength);
             List<GifSelection> gifSelections = await DocumentClientHelper.GetMostRecentDocuments<GifSelection>(
-                DocumentCollections.GifSelectionCollection, userId, historyLength);
+                DocumentCollections.GifSelectionCollection, userId, branchLength);
             List<string> categoryKeywords = gifSelections.Select(x => x.Category).Where(x => !string.IsNullOrEmpty(x))
                 .Distinct().ToList();
             List<GifImage> gifs = await DocumentClientHelper.GetGifs(gifSelections.Select(x => x.Url).ToList());
             List<string> gifSelectionKeywords =
-                gifs.SelectMany(x => x.Keywords).Where(x => !string.IsNullOrEmpty(x)).ToList();
+                gifs.SelectMany(x => x.Keywords).Where(x => !string.IsNullOrEmpty(x)).Distinct().Take(branchLength)
+                    .ToList();
             return new UserProfile
             {
-                SearchKeywords = searchKeywords.Select(x => x.Keyword).Where(x => !string.IsNullOrEmpty(x)).Distinct()
-                    .ToArray(),
+                SearchKeywords = searchKeywords.Select(x => x.Keyword.ToLower()).Where(x => !string.IsNullOrEmpty(x))
+                    .Distinct().ToArray(),
                 GifSelectionKeywords = categoryKeywords.Concat(gifSelectionKeywords).Distinct().ToArray(),
                 AccentColors = gifs.Select(x => x.AccentColor).Where(x => !string.IsNullOrEmpty(x)).Distinct().ToArray()
             };

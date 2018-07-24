@@ -37,17 +37,13 @@ namespace BingApi.APIs
             return Client.Value;
         }
 
-        public static async Task<KeywordGifImages[]> GetImages(string[] keywords, int maxImagesPerKeyword)
+        public static async Task<GifImage[]> GetImages(string[] keywords, int maxImagesPerKeyword)
         {
-            var result = new List<KeywordGifImages>();
+            var result = new List<GifImage>();
             foreach (var keyword in keywords)
             {
                 GifImage[] images = await BingImageSearch(keyword, maxImagesPerKeyword);
-                result.Add(new KeywordGifImages
-                {
-                    Keyword = keyword,
-                    Images = images
-                });
+                result.AddRange(images);
             }
 
             return result.ToArray();
@@ -122,8 +118,9 @@ namespace BingApi.APIs
         }
 
         private static async Task<string[]> GetKeywords(GifImage gif)
-        {            
-        string input = await GetResponse(gif.ContentUrl);
+        {
+            // filter out words using blacklist
+            string input = await GetResponse(gif.ContentUrl);
             MatchCollection matches = Regex.Matches(input, Pattern);
             var keywords = matches[0].Groups[1].Value.Split(new[] {",", " "}, StringSplitOptions.RemoveEmptyEntries)
                 .Select(x => x.ToLower()).Where(x => !CommonWords.Contains(x)).ToArray();

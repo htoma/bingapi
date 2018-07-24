@@ -13,5 +13,6 @@ namespace BingApi.DbModel
         public int Height { get; set; }
         public string AccentColor { get; set; }
         public string[] Keywords { get; set; }
+        public double Score { get; set; }
     }
 }

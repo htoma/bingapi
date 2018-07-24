@@ -5,6 +5,7 @@ using System.Net;
 using System.Net.Http;
 using System.Threading.Tasks;
 using BingApi.APIs;
+using BingApi.DbModel;
 using BingApi.Helpers;
 using Microsoft.Azure.WebJobs;
 using Microsoft.Azure.WebJobs.Extensions.Http;
@@ -47,7 +48,8 @@ namespace BingApi.Functions
                     maxImagesPerKeyword = 3;
                 }
 
-                KeywordGifImages[] images = await BingImageApi.GetImages(combinedKeywords, maxImagesPerKeyword);
+                GifImage[] images = await BingImageApi.GetImages(combinedKeywords, maxImagesPerKeyword);
+                GifImage[] orderedImages = await OrderImages(images, prefixKeywords.AllKeywords);
 
                 return req.CreateResponse(HttpStatusCode.OK, new ResultExplained
                 {
@@ -56,13 +58,52 @@ namespace BingApi.Functions
                     UserProfile = profile,
                     ProfileKeywords = profileKeywords,
                     CombinedKeywords = combinedKeywords,
-                    Images = images
+                    Images = orderedImages
                 });
             }
             catch (Exception ex)
             {
                 return req.CreateErrorResponse(HttpStatusCode.InternalServerError, ex.Message);
             }
+        }
+
+        private static async Task<GifImage[]> OrderImages(GifImage[] images, string[] prefixKeywords)
+        {
+            foreach (var image in images)
+            {
+                double score = await GetImageScore(image, prefixKeywords);
+                image.Score = score;
+            }
+
+            return images.OrderByDescending(x => x.Score).ToArray();
+        }
+
+        private static async Task<double> GetImageScore(GifImage image, string[] prefixKeywords)
+        {
+            if (image.Keywords.Any(prefixKeywords.Contains))
+            {
+                return 1;
+            }
+            
+            double max = 0;
+            foreach (var word in image.Keywords)
+            {
+                foreach (var keyword in prefixKeywords)
+                {
+                    var score = await Similarity.HighSimilarityScore(word, keyword);
+                    if (score == 1)
+                    {
+                        return 1;
+                    }
+
+                    if (max < score)
+                    {
+                        max = score;
+                    }
+                }
+            }
+
+            return max;
         }
 
         private static string[] CombineKeywords(PrefixKeywords keywords, string[] profileKeywords)
