@@ -1,9 +1,5 @@
-﻿using Newtonsoft.Json;
-using Newtonsoft.Json.Serialization;
-
-namespace BingApi.DbModel
+﻿namespace BingApi.DbModel
 {
-    [JsonObject(NamingStrategyType = typeof(CamelCaseNamingStrategy))]
     public class GifImage
     {
         public string Id { get; set; }

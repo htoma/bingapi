@@ -1,12 +1,9 @@
 ﻿// Copyright (c) Microsoft Corporation. All rights reserved.
 
 using BingApi.DbModel;
-using Newtonsoft.Json;
-using Newtonsoft.Json.Serialization;
 
 namespace BingApi.Model
 {
-    [JsonObject(NamingStrategyType = typeof(CamelCaseNamingStrategy))]
     public class ResultExplained
     {
         public string Prefix { get; set; }

@@ -2,8 +2,6 @@
 {
     public class UserProfile
     {
-        public string[] SearchKeywords { get; set; }
-        public string[] GifSelectionKeywords { get; set; }
-        public string[] AccentColors { get; set; }
+        public string[] Keywords { get; set; }
     }
 }

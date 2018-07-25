@@ -84,7 +84,6 @@ namespace BingApi.APIs
                     else
                     {
                         await AddKeywordsToImage(image);
-                        await DocumentClientHelper.StoreGif(image);
                     }
                 }
 
@@ -147,38 +146,6 @@ namespace BingApi.APIs
                         return await streamReader.ReadToEndAsync().ConfigureAwait(false);
                     }
                 }
-            }
-        }
-
-        public static async Task<string[]> GetImageKeywords(string url)
-        {
-            var id = ExtractIdFromUrl(url);
-            if (id == null)
-            {
-                return Array.Empty<string>();
-            }
-
-            try
-            {
-                GifImage image = await DocumentClientHelper.GetGifByUrl(url);
-                if (image != null)
-                {
-                    return image.Keywords;
-                }
-
-                var newImage = new GifImage
-                {
-                    Id = id,
-                    ContentUrl = url
-                };
-                var keywords = await GetKeywords(newImage);
-                newImage.Keywords = keywords;
-                await DocumentClientHelper.StoreGif(newImage);
-                return newImage.Keywords;
-            }
-            catch (Exception ex)
-            {
-                return Array.Empty<string>();
             }
         }
     }

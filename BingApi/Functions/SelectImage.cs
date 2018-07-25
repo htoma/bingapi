@@ -2,8 +2,6 @@ using System;
 using System.Net;
 using System.Net.Http;
 using System.Threading.Tasks;
-using BingApi.APIs;
-using BingApi.DbHelpers;
 using BingApi.DbModel;
 using Microsoft.Azure.WebJobs;
 using Microsoft.Azure.WebJobs.Extensions.Http;
@@ -39,26 +37,12 @@ namespace BingApi.Functions
                     {
                         var payload = JsonConvert.DeserializeObject<SearchKeyword>(content);
                         await ProfileHelper.UpdateProfileWithSearchKeywords(payload.UserId, payload.Keyword);
-
-                        //await DocumentClientHelper.UpsertDoc(DocumentCollections.SearchKeywordsCollection, payload);
                         break;
                     }
                     case "gif":
                     {
                         var payload = JsonConvert.DeserializeObject<GifSelection>(content);
-                        await ProfileHelper.UpdateProfileWithSearchKeywords(payload.UserId, payload.Category);
-                        
-                        /* 
-                        // image may not be from giphy
-                        // if the image is from giphy and we don't have it, we need to store it
-                        var imageKeywords = await BingImageApi.GetImageKeywords(payload.Url);
-                        if (imageKeywords.Length != 0)
-                        {
-
-                            await DocumentClientHelper.UpsertDoc(DocumentCollections.GifSelectionCollection, payload);
-                        }
-                        */
-
+                        await ProfileHelper.UpdateProfileWithSearchKeywords(payload.UserId, payload.Category);                   
                         break;
                     }
                     default:

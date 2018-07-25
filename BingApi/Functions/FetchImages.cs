@@ -39,7 +39,7 @@ namespace BingApi.Functions
                 
                 // get keywords from user profile
                 var profile = await ProfileHelper.GetUserProfile(userPrefix.UserId);
-                var profileKeywords = ProfileHelper.GetKeywordsFromProfile(profile);
+                var profileKeywords = profile.Keywords;
 
                 var combinedKeywords = CombineKeywords(prefixKeywords, profileKeywords);
 
