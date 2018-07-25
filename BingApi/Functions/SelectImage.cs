@@ -39,20 +39,25 @@ namespace BingApi.Functions
                     {
                         var payload = JsonConvert.DeserializeObject<SearchKeyword>(content);
                         await ProfileHelper.UpdateProfileWithSearchKeywords(payload.UserId, payload.Keyword);
-                        await DocumentClientHelper.UpsertDoc(DocumentCollections.SearchKeywordsCollection, payload);
+
+                        //await DocumentClientHelper.UpsertDoc(DocumentCollections.SearchKeywordsCollection, payload);
                         break;
                     }
                     case "gif":
                     {
                         var payload = JsonConvert.DeserializeObject<GifSelection>(content);
+                        await ProfileHelper.UpdateProfileWithSearchKeywords(payload.UserId, payload.Category);
+                        
+                        /* 
                         // image may not be from giphy
                         // if the image is from giphy and we don't have it, we need to store it
                         var imageKeywords = await BingImageApi.GetImageKeywords(payload.Url);
                         if (imageKeywords.Length != 0)
                         {
-                            await ProfileHelper.UpdateProfileWithSearchKeywords(payload.UserId, payload.Category);
+
                             await DocumentClientHelper.UpsertDoc(DocumentCollections.GifSelectionCollection, payload);
                         }
+                        */
 
                         break;
                     }
