@@ -77,22 +77,7 @@ namespace BingApi.APIs
 
                 var value = JsonConvert.DeserializeObject<ApiImage>(content);
                 List<GifImage> images = value.Value.Where(x => x.ContentUrl.Contains(GiphyDomain)).Take(max).ToList();
-                //var existing =
-                //    (await DocumentClientHelper.GetGifs(images.Select(x => x.ContentUrl).ToList())).ToDictionary(x =>
-                //        x.ContentUrl);
-                //foreach (var image in images)
-                //{
-                //    AddIdToImage(image);
-                //    if (existing.ContainsKey(image.ContentUrl))
-                //    {
-                //        image.Keywords = existing[image.ContentUrl].Keywords.Take(keywordsPerImage).ToArray();
-                //    }
-                //    else
-                //    {
-                //        await AddKeywordsToImage(image, keywordsPerImage);
-                //    }
-                //}
-
+      
                 return images.ToArray();
             }
             catch (Exception ex)

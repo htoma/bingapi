@@ -30,7 +30,25 @@ namespace BingApi.APIs
                                       new MultiLanguageInput("en", "1", payload)
                                   }));
             
-            return batchResult.Documents.SelectMany(x => x.KeyPhrases).Distinct().ToArray();
+            var result = batchResult.Documents.SelectMany(x => x.KeyPhrases).Distinct().ToArray();
+            if (result.Length > 0)
+            {
+                return result;
+            }
+
+            var lastWord = GetLastWord(payload);
+            return string.IsNullOrEmpty(lastWord) ? new[] {"today"} : new[] {lastWord};
+        }
+
+        private static string GetLastWord(string text)
+        {
+            var words = GetWords(text);
+            return words.Length > 0 ? words.Last() : null;
+        }
+
+        private static string[] GetWords(string text)
+        {
+            return text.Split(" ,.!&".ToCharArray(), StringSplitOptions.RemoveEmptyEntries);            
         }
     }
 }
