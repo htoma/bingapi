@@ -2,7 +2,6 @@
 {
     public class GifImage
     {
-        public string Id { get; set; }
         public string ContentUrl { get; set; }
         public string[] Keywords { get; set; }
         public double Score { get; set; }

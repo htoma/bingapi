@@ -16,17 +16,6 @@ namespace BingApi.DbHelpers
         private static readonly Uri ServiceEndpoint = new Uri(ConfigurationManager.AppSettings["DbServiceEndpoint"]);
         private static readonly string PrimaryKey = ConfigurationManager.AppSettings["DbPrimaryKey"];
   
-        public static async Task<List<GifImage>> GetGifs(List<string> urls)
-        {
-            var ids = urls.Select(BingImageApi.ExtractIdFromUrl);
-            IDocumentQuery<GifImage> query = Client.Value
-                .CreateDocumentQuery<GifImage>(GetCollectionUri(DocumentCollections.GifCollection))
-                .Where(x => ids.Contains(x.Id))
-                .AsDocumentQuery();
-            var result = await query.ExecuteNextAsync<GifImage>();
-            return result.ToList();
-        }
-
         public static async Task<UserProfileWithKeywords> GetUserProfile(string userId)
         {
             IDocumentQuery<UserProfileWithKeywords> query = Client.Value

@@ -97,11 +97,6 @@ namespace BingApi.APIs
             return id[3];
         }
 
-        private static void AddIdToImage(GifImage image)
-        {
-            image.Id = ExtractIdFromUrl(image.ContentUrl);
-        }
-
         private static async Task AddKeywordsToImage(GifImage image, int keywordsPerImage)
         {
             image.Keywords = await GetKeywords(image, keywordsPerImage);
