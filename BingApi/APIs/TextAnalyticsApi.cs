@@ -33,7 +33,7 @@ namespace BingApi.APIs
             var result = batchResult.Documents.SelectMany(x => x.KeyPhrases).Distinct().ToArray();
             if (result.Length > 0)
             {
-                return result;
+                return result.SelectMany(GetWords).Distinct().ToArray();
             }
 
             var lastWord = GetLastWord(payload);
@@ -46,7 +46,7 @@ namespace BingApi.APIs
             return words.Length > 0 ? words.Last() : null;
         }
 
-        private static string[] GetWords(string text)
+        public static string[] GetWords(string text)
         {
             return text.Split(" ,.!&".ToCharArray(), StringSplitOptions.RemoveEmptyEntries);            
         }

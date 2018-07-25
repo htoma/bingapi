@@ -36,16 +36,12 @@ namespace BingApi.APIs
 
         public static async Task<GifImage[]> GetImages(string[] keywords, int totalImages, int keywordsPerImage)
         {
-            var imagesPerKeyword = totalImages / keywords.Length;
-            if (totalImages % keywords.Length != 0)
+            var result = await GetImages(keywords, totalImages);
+
+            if (result.Count < totalImages)
             {
-                imagesPerKeyword++;
-            }
-            var result = new List<GifImage>();
-            foreach (var keyword in keywords)
-            {
-                GifImage[] images = await BingImageSearch(keyword, imagesPerKeyword);
-                result.AddRange(images);
+                string[] newKeywords = keywords.Select(GetLongestKeyword).ToArray();
+                result = await GetImages(newKeywords, totalImages);
             }
 
             if (keywordsPerImage > 0)
@@ -55,6 +51,35 @@ namespace BingApi.APIs
             }
 
             return result.ToArray();
+        }
+
+        private static string GetLongestKeyword(string text)
+        {
+            var words = TextAnalyticsApi.GetWords(text);
+            if (words.Length <= 1)
+            {
+                return text;
+            }
+
+            return words.OrderByDescending(x => x.Length).First();
+        }
+
+        private static async Task<List<GifImage>> GetImages(string[] keywords, int totalImages)
+        {
+            var imagesPerKeyword = totalImages / keywords.Length;
+            if (totalImages % keywords.Length != 0)
+            {
+                imagesPerKeyword++;
+            }
+
+            var result = new List<GifImage>();
+            foreach (var keyword in keywords)
+            {
+                GifImage[] images = await BingImageSearch(keyword, imagesPerKeyword);
+                result.AddRange(images);
+            }
+
+            return result;
         }
 
         private static async Task<GifImage[]> BingImageSearch(string searchQuery, int max)
