@@ -11,6 +11,7 @@ using BingApi.Helpers;
 using Microsoft.Azure.WebJobs;
 using Microsoft.Azure.WebJobs.Extensions.Http;
 using Microsoft.Azure.WebJobs.Host;
+using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 
 namespace BingApi.Functions
@@ -23,10 +24,8 @@ namespace BingApi.Functions
         [FunctionName("FetchImages")]
         public static async Task<HttpResponseMessage> Run(
             [HttpTrigger(AuthorizationLevel.Function, "post", Route = "images")]
-            HttpRequestMessage req, TraceWriter log)
+            HttpRequestMessage req, ILogger log)
         {
-            log.Info($"Get images request from {req.GetKeyId()}");
-
             if (!req.IsKeyId(Constants.Mobile))
             {
                 return req.CreateErrorResponse(HttpStatusCode.Forbidden, "Unauthorized");
@@ -74,6 +73,8 @@ namespace BingApi.Functions
             }
             catch (Exception ex)
             {
+                var msg = $"Input: {payload}, error: {ex.Message}";
+                log.LogError(msg);
                 return req.CreateErrorResponse(HttpStatusCode.InternalServerError, ex.Message);
             }
         }
