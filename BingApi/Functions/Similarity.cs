@@ -1,3 +1,4 @@
+using System;
 using System.Linq;
 using System.Net;
 using System.Net.Http;
@@ -82,15 +83,26 @@ namespace BingApi.Functions
 
         private static async Task<LocalResult> GetScore(HttpClient client, string coef, string word1, string word2)
         {
-            var response =
-                await client.GetAsync($"http://ws4jdemo.appspot.com/ws4j?measure={coef}&args={word1}%3A%3A{word2}");
-            var content = await response.Content.ReadAsStringAsync();
-            var result = JsonConvert.DeserializeObject<SimilarityResult>(content);
-            return new LocalResult
+            try
             {
-                Coef = coef,
-                Value = result.SimilarityScores[0].Score
-            };
+                var response =
+                    await client.GetAsync($"http://ws4jdemo.appspot.com/ws4j?measure={coef}&args={word1}%3A%3A{word2}");
+                var content = await response.Content.ReadAsStringAsync();
+                var result = JsonConvert.DeserializeObject<SimilarityResult>(content);
+                return new LocalResult
+                {
+                    Coef = coef,
+                    Value = result.SimilarityScores[0].Score
+                };
+            }
+            catch (Exception ex)
+            {
+                return new LocalResult
+                {
+                    Coef = coef,
+                    Value = 0
+                };
+            }
         }
 
         public class LocalResult

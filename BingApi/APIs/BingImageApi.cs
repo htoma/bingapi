@@ -20,9 +20,7 @@ namespace BingApi.APIs
 
         private const string Pattern = @"<meta name=""keywords"" content=""((.+?)+)"">";
 
-        private const string GiphyDomain = "media.giphy.com";
-
-        private const int LimitKeywordsPerImage = 3;
+        private const string GiphyDomain = "media.giphy.com";        
 
         private static readonly Lazy<HttpClient> Client = new Lazy<HttpClient>(() => new HttpClient());
 
@@ -37,7 +35,7 @@ namespace BingApi.APIs
             return Client.Value;
         }
 
-        public static async Task<GifImage[]> GetImages(string[] keywords, int totalImages)
+        public static async Task<GifImage[]> GetImages(string[] keywords, int totalImages, int keywordsPerImage)
         {
             var imagesPerKeyword = totalImages / keywords.Length;
             if (totalImages % keywords.Length != 0)
@@ -47,14 +45,17 @@ namespace BingApi.APIs
             var result = new List<GifImage>();
             foreach (var keyword in keywords)
             {
-                GifImage[] images = await BingImageSearch(keyword, imagesPerKeyword);
+                GifImage[] images = await BingImageSearch(keyword, imagesPerKeyword, keywordsPerImage);
                 result.AddRange(images);
             }
+
+            var tasks = result.Select(x => AddKeywordsToImage(x, keywordsPerImage));
+            await Task.WhenAll(tasks);
 
             return result.ToArray();
         }
 
-        private static async Task<GifImage[]> BingImageSearch(string searchQuery, int max)
+        private static async Task<GifImage[]> BingImageSearch(string searchQuery, int max, int keywordsPerImage)
         {
             if (string.IsNullOrEmpty(searchQuery))
             {
@@ -76,21 +77,21 @@ namespace BingApi.APIs
 
                 var value = JsonConvert.DeserializeObject<ApiImage>(content);
                 List<GifImage> images = value.Value.Where(x => x.ContentUrl.Contains(GiphyDomain)).Take(max).ToList();
-                var existing =
-                    (await DocumentClientHelper.GetGifs(images.Select(x => x.ContentUrl).ToList())).ToDictionary(x =>
-                        x.ContentUrl);
-                foreach (var image in images)
-                {
-                    AddIdToImage(image);
-                    if (existing.ContainsKey(image.ContentUrl))
-                    {
-                        image.Keywords = existing[image.ContentUrl].Keywords.ToArray();
-                    }
-                    else
-                    {
-                        await AddKeywordsToImage(image);
-                    }
-                }
+                //var existing =
+                //    (await DocumentClientHelper.GetGifs(images.Select(x => x.ContentUrl).ToList())).ToDictionary(x =>
+                //        x.ContentUrl);
+                //foreach (var image in images)
+                //{
+                //    AddIdToImage(image);
+                //    if (existing.ContainsKey(image.ContentUrl))
+                //    {
+                //        image.Keywords = existing[image.ContentUrl].Keywords.Take(keywordsPerImage).ToArray();
+                //    }
+                //    else
+                //    {
+                //        await AddKeywordsToImage(image, keywordsPerImage);
+                //    }
+                //}
 
                 return images.ToArray();
             }
@@ -116,20 +117,20 @@ namespace BingApi.APIs
             image.Id = ExtractIdFromUrl(image.ContentUrl);
         }
 
-        private static async Task AddKeywordsToImage(GifImage image)
+        private static async Task AddKeywordsToImage(GifImage image, int keywordsPerImage)
         {
-            image.Keywords = await GetKeywords(image);
+            image.Keywords = await GetKeywords(image, keywordsPerImage);
         }
 
-        private static async Task<string[]> GetKeywords(GifImage gif)
+        private static async Task<string[]> GetKeywords(GifImage gif, int keywordsPerImage)
         {
             // filter out words using blacklist
             string input = await GetResponse(gif.ContentUrl);
             MatchCollection matches = Regex.Matches(input, Pattern);
             var keywords = matches[0].Groups[1].Value.Split(new[] {",", " "}, StringSplitOptions.RemoveEmptyEntries)
                 .Select(x => x.ToLower()).Where(x => !Blacklist.BlacklistWords.Contains(x)).ToArray();
-            return keywords;
-        }
+            return keywords.Distinct().Take(keywordsPerImage).ToArray();
+        }        
 
         private static async Task<string> GetResponse(string url)
         {

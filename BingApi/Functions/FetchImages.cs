@@ -17,6 +17,9 @@ namespace BingApi.Functions
 {
     public static class FetchImages
     {
+        private const int MaxImages = 12;
+        private const int MaxKeywordsPerImage = 10;
+
         [FunctionName("FetchImages")]
         public static async Task<HttpResponseMessage> Run(
             [HttpTrigger(AuthorizationLevel.Function, "post", Route = "images")]
@@ -36,28 +39,34 @@ namespace BingApi.Functions
                 var userPrefix = JsonConvert.DeserializeObject<UserPrefix>(payload);
 
                 // get  keywords for prefix using Text Analytics
-                PrefixKeywords prefixKeywords = await TextAnalyticsApi.GetKeywords(userPrefix.Prefix);
+                string[] prefixKeywords = await TextAnalyticsApi.GetKeywords(userPrefix.Prefix);
                 
                 // get keywords from user profile
                 var profile = await ProfileHelper.GetUserProfile(userPrefix.UserId);
                 var profileKeywords = profile.Keywords;
 
-                var combinedKeywords = await CombineKeywords(prefixKeywords.AllKeywords, profileKeywords);
+                var combinedKeywords = await CombineKeywords(prefixKeywords, profileKeywords);
 
                 if (!int.TryParse(req.GetQueryParameter("totalImages"), out int totalImages))
                 {
-                    totalImages = 12;
+                    totalImages = MaxImages;
+                }
+
+                bool useSimilarity = true;
+                if (!int.TryParse(req.GetQueryParameter("imageKeywords"), out int imageKeywords))
+                {
+                    imageKeywords = MaxKeywordsPerImage;
+                    useSimilarity = false;
                 }
 
                 GifImage[] images =
-                    await BingImageApi.GetImages(combinedKeywords, totalImages);
-                GifImage[] orderedImages = await OrderImages(images, prefixKeywords.AllKeywords);
+                    await BingImageApi.GetImages(combinedKeywords, totalImages, imageKeywords);
+                GifImage[] orderedImages = await OrderImages(images, profileKeywords, useSimilarity);
 
                 return req.CreateResponse(HttpStatusCode.OK, new ResultExplained
                 {
                     Prefix = userPrefix.Prefix,
                     PrefixKeywords = prefixKeywords,
-                    UserProfile = profile,
                     ProfileKeywords = profileKeywords,
                     CombinedKeywords = combinedKeywords,
                     Images = orderedImages
@@ -69,28 +78,40 @@ namespace BingApi.Functions
             }
         }
 
-        private static async Task<GifImage[]> OrderImages(GifImage[] images, string[] prefixKeywords)
+        private static async Task<GifImage[]> OrderImages(GifImage[] images, string[] profileKeywords,
+            bool useHighSimilarity)
         {
-            //foreach (var image in images)
-            //{
-            //    double score = await GetImageScore(image, prefixKeywords);
-            //    image.Score = score;
-            //}
+            if (profileKeywords.Length == 0)
+            {
+                return images;
+            }
+
+            foreach (var image in images)
+            {
+                double score = await GetImageScore(image, profileKeywords, useHighSimilarity);
+                image.Score = score;
+            }
 
             return images.OrderByDescending(x => x.Score).ToArray();
         }
 
-        private static async Task<double> GetImageScore(GifImage image, string[] prefixKeywords)
+        private static async Task<double> GetImageScore(GifImage image, string[] profileKeywords,
+            bool useHighSimilarity)
         {
-            if (image.Keywords.Any(prefixKeywords.Contains))
+            if (image.Keywords.Any(profileKeywords.Contains))
             {
                 return 1;
+            }
+
+            if (!useHighSimilarity)
+            {
+                return 0;
             }
             
             double max = 0;
             foreach (var word in image.Keywords)
             {
-                foreach (var keyword in prefixKeywords)
+                foreach (var keyword in profileKeywords)
                 {
                     double score = await Similarity.HighSimilarityScore(word, keyword);
                     if (score == 1)
