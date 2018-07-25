@@ -21,12 +21,14 @@ namespace BingApi.Helpers
             };
         }
 
-        public static async Task UpdateProfileWithSearchKeywords(string userId, string userKeyword)
-        {
-            if (string.IsNullOrEmpty(userKeyword))
+        public static async Task UpdateProfileWithSearchKeywords(string userId, string inputKeyword)
+        {            
+            if (string.IsNullOrEmpty(inputKeyword))
             {
                 return;
             }
+
+            var userKeyword = inputKeyword.Trim().ToLower();
 
             var profile = await DocumentClientHelper.GetUserProfile(userId);
             if (profile == null || profile.Keywords.Length == 0)
@@ -40,6 +42,11 @@ namespace BingApi.Helpers
             }
             else if (profile.Keywords.Length > 0)
             {
+                if (profile.Keywords.Contains(userKeyword))
+                {
+                    return;
+                }
+
                 foreach (var keyword in profile.Keywords)
                 {
                     if (await Functions.Similarity.AreSimilar(keyword, userKeyword))
