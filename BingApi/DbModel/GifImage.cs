@@ -12,5 +12,6 @@
         public string ContentSize { get; set; }
         public string HostPageUrl { get; set; }
         public string HostPageDisplayUrl { get; set; }
+        public string Name { get; set; }
     }
 }

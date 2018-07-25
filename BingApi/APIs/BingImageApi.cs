@@ -7,7 +7,6 @@ using System.IO.Compression;
 using System.Linq;
 using System.Net.Http;
 using System.Text.RegularExpressions;
-using BingApi.DbHelpers;
 using BingApi.DbModel;
 using BingApi.Model;
 using Newtonsoft.Json;
@@ -76,25 +75,15 @@ namespace BingApi.APIs
                 var content = await response.Content.ReadAsStringAsync();
 
                 var value = JsonConvert.DeserializeObject<ApiImage>(content);
-                List<GifImage> images = value.Value.Where(x => x.ContentUrl.Contains(GiphyDomain)).Take(max).ToList();
-      
+                //List<GifImage> images = value.Value.Where(x => x.ContentUrl.Contains(GiphyDomain)).Take(max).ToList();
+                List<GifImage> images = value.Value.Take(max).ToList();
+
                 return images.ToArray();
             }
             catch (Exception ex)
             {
                 return Array.Empty<GifImage>();
             }
-        }
-
-        public static string ExtractIdFromUrl(string url)
-        {
-            if (!url.Contains(GiphyDomain))
-            {
-                return null;
-            }
-            var id = url.Split(new[] { "/" }, StringSplitOptions.RemoveEmptyEntries);
-            //https://media.giphy.com/media/zHRHMP5jzXdxm/giphy.gif
-            return id[3];
         }
 
         private static async Task AddKeywordsToImage(GifImage image, int keywordsPerImage)
@@ -105,11 +94,18 @@ namespace BingApi.APIs
         private static async Task<string[]> GetKeywords(GifImage gif, int keywordsPerImage)
         {
             // filter out words using blacklist
-            string input = await GetResponse(gif.ContentUrl);
-            MatchCollection matches = Regex.Matches(input, Pattern);
-            var keywords = matches[0].Groups[1].Value.Split(new[] {",", " "}, StringSplitOptions.RemoveEmptyEntries)
-                .Select(x => x.ToLower()).Where(x => !Blacklist.BlacklistWords.Contains(x)).ToArray();
-            return keywords.Distinct().Take(keywordsPerImage).ToArray();
+            try
+            {
+                string input = await GetResponse(gif.ContentUrl);
+                MatchCollection matches = Regex.Matches(input, Pattern);
+                var keywords = matches[0].Groups[1].Value.Split(new[] {",", " "}, StringSplitOptions.RemoveEmptyEntries)
+                    .Select(x => x.ToLower()).Where(x => !Blacklist.BlacklistWords.Contains(x)).ToArray();
+                return keywords.Distinct().Take(keywordsPerImage).ToArray();
+            }
+            catch (Exception ex)
+            {
+                return Array.Empty<string>();
+            }
         }        
 
         private static async Task<string> GetResponse(string url)

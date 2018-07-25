@@ -95,10 +95,19 @@ namespace BingApi.Functions
             return images.OrderByDescending(x => x.Score).ToArray();
         }
 
+        private static bool ImageNameMatchesKeywords(GifImage image, string[] keywords)
+        {
+            if (string.IsNullOrEmpty(image.Name))
+            {
+                return false;
+            }
+            return keywords.Any(x => image.Name.Contains(x));
+        }
+
         private static async Task<double> GetImageScore(GifImage image, string[] profileKeywords,
             bool useHighSimilarity)
         {
-            if (image.Keywords.Any(profileKeywords.Contains))
+            if (image.Keywords.Any(profileKeywords.Contains) || ImageNameMatchesKeywords(image, profileKeywords))
             {
                 return 1;
             }
