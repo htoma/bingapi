@@ -1,4 +1,5 @@
-﻿using System.Linq;
+﻿using System;
+using System.Linq;
 using System.Threading.Tasks;
 using BingApi.DbHelpers;
 using BingApi.DbModel;
@@ -16,7 +17,7 @@ namespace BingApi.Helpers
 
             return new UserProfile
             {
-                Keywords = profile.Keywords
+                Keywords = profile != null ? profile.Keywords : Array.Empty<string>()
             };
         }
 

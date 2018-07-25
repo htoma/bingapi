@@ -46,7 +46,7 @@ namespace BingApi.Functions
 
                 if (!int.TryParse(req.GetQueryParameter("totalImages"), out int totalImages))
                 {
-                    totalImages = 6;
+                    totalImages = 12;
                 }
 
                 GifImage[] images =

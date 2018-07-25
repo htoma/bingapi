@@ -84,7 +84,7 @@ namespace BingApi.APIs
                     AddIdToImage(image);
                     if (existing.ContainsKey(image.ContentUrl))
                     {
-                        image.Keywords = existing[image.ContentUrl].Keywords.Take(LimitKeywordsPerImage).ToArray();
+                        image.Keywords = existing[image.ContentUrl].Keywords.ToArray();
                     }
                     else
                     {
