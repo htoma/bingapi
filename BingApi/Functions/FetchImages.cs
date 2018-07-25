@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using BingApi.Model;
 using System.Net;
@@ -41,7 +42,7 @@ namespace BingApi.Functions
                 var profile = await ProfileHelper.GetUserProfile(userPrefix.UserId);
                 var profileKeywords = profile.Keywords;
 
-                var combinedKeywords = CombineKeywords(prefixKeywords, profileKeywords);
+                var combinedKeywords = await CombineKeywords(prefixKeywords.AllKeywords, profileKeywords);
 
                 if (!int.TryParse(req.GetQueryParameter("totalImages"), out int totalImages))
                 {
@@ -107,10 +108,26 @@ namespace BingApi.Functions
             return max;
         }
 
-        private static string[] CombineKeywords(PrefixKeywords keywords, string[] profileKeywords)
+        private static async Task<string[]> CombineKeywords(string[] prefixKeywords, string[] profileKeywords)
         {
-            // do we take everything? all keywords from user input and all keywords from users' profile?
-            return keywords.AllKeywords.Concat(profileKeywords).Distinct().ToArray();
+            // find orthogonal combinations, if none then use only keywords from prefix
+            if (profileKeywords.Length == 0)
+            {
+                return prefixKeywords;
+            }
+            var result = new List<string>();
+            foreach (var prefixKeyboard in prefixKeywords)
+            {
+                foreach (var profileKeyword in profileKeywords.Where(x => !prefixKeyboard.Contains(x)).ToList())
+                {
+                    if (await Similarity.AreOrthogonal(prefixKeyboard, profileKeyword))
+                    {
+                        result.Add($"{profileKeyword} {prefixKeyboard}");
+                    }
+                }
+            }
+
+            return result.ToArray();
         }
     }
 }
