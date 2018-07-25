@@ -44,17 +44,20 @@ namespace BingApi.APIs
             var result = new List<GifImage>();
             foreach (var keyword in keywords)
             {
-                GifImage[] images = await BingImageSearch(keyword, imagesPerKeyword, keywordsPerImage);
+                GifImage[] images = await BingImageSearch(keyword, imagesPerKeyword);
                 result.AddRange(images);
             }
 
-            var tasks = result.Select(x => AddKeywordsToImage(x, keywordsPerImage));
-            await Task.WhenAll(tasks);
+            if (keywordsPerImage > 0)
+            {
+                var tasks = result.Select(x => AddKeywordsToImage(x, keywordsPerImage));
+                await Task.WhenAll(tasks);
+            }
 
             return result.ToArray();
         }
 
-        private static async Task<GifImage[]> BingImageSearch(string searchQuery, int max, int keywordsPerImage)
+        private static async Task<GifImage[]> BingImageSearch(string searchQuery, int max)
         {
             if (string.IsNullOrEmpty(searchQuery))
             {

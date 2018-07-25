@@ -10,7 +10,6 @@ using BingApi.DbModel;
 using BingApi.Helpers;
 using Microsoft.Azure.WebJobs;
 using Microsoft.Azure.WebJobs.Extensions.Http;
-using Microsoft.Azure.WebJobs.Host;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 
@@ -62,7 +61,7 @@ namespace BingApi.Functions
                     await BingImageApi.GetImages(combinedKeywords, totalImages, imageKeywords);
                 GifImage[] orderedImages = await OrderImages(images, profileKeywords, useSimilarity);
 
-                return req.CreateResponse(HttpStatusCode.OK, new ResultExplained
+                return req.CreateResponse(HttpStatusCode.OK, new FetchImagesExplained
                 {
                     Prefix = userPrefix.Prefix,
                     PrefixKeywords = prefixKeywords,
