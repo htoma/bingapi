@@ -150,33 +150,35 @@ namespace BingApi.APIs
             }
         }
 
-        public static async Task<bool> IsImageOk(string url)
+        public static async Task<string[]> GetImageKeywords(string url)
         {
             var id = ExtractIdFromUrl(url);
             if (id == null)
             {
-                return false;
+                return Array.Empty<string>();
             }
 
             try
             {
-                var image = await DocumentClientHelper.GetGifByUrl(url);
-                if (image == null)
+                GifImage image = await DocumentClientHelper.GetGifByUrl(url);
+                if (image != null)
                 {
-                    var newImage = new GifImage
-                    {
-                        Id = id,
-                        ContentUrl = url
-                    };
-                    var keywords = await GetKeywords(newImage);
-                    newImage.Keywords = keywords;
-                    await DocumentClientHelper.StoreGif(newImage);                    
+                    return image.Keywords;
                 }
-                return true;
+
+                var newImage = new GifImage
+                {
+                    Id = id,
+                    ContentUrl = url
+                };
+                var keywords = await GetKeywords(newImage);
+                newImage.Keywords = keywords;
+                await DocumentClientHelper.StoreGif(newImage);
+                return newImage.Keywords;
             }
             catch (Exception ex)
             {
-                return false;
+                return Array.Empty<string>();
             }
         }
     }
