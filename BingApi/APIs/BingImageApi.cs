@@ -38,11 +38,8 @@ namespace BingApi.APIs
         {
             var result = await GetImages(keywords, totalImages);
 
-            if (result.Count < totalImages)
-            {
-                string[] newKeywords = keywords.Select(GetLongestKeyword).ToArray();
-                result = await GetImages(newKeywords, totalImages);
-            }
+            string[] newKeywords = keywords.Select(GetLongestKeyword).ToArray();
+            result = await GetImages(newKeywords, totalImages);
 
             if (keywordsPerImage > 0)
             {
