@@ -50,7 +50,7 @@ namespace BingApi.Functions
                 }
 
                 GifImage[] images =
-                    await BingImageApi.GetImages(combinedKeywords, totalImages / combinedKeywords.Length);
+                    await BingImageApi.GetImages(combinedKeywords, totalImages);
                 GifImage[] orderedImages = await OrderImages(images, prefixKeywords.AllKeywords);
 
                 return req.CreateResponse(HttpStatusCode.OK, new ResultExplained
